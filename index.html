@@ -46,6 +46,20 @@
         <p id="result-message"></p>
         <button class="main-btn" onclick="location.reload()">СПРОБУВАТИ ЩЕ РАЗ</button>
     </div>
+
+    <div class="stats">
+    <span id="progress">Питання 1 з 50</span>
+    <span id="accuracy-live" style="font-weight: bold; color: #64748b;">Точність: 0%</span>
+    <span id="score-live">Рахунок: 0</span>
+</div>
+
+<div id="result-screen" class="hidden">
+    <h1>Тест завершено!</h1>
+    <div class="score-circle" id="final-score">0</div>
+    <div style="font-size: 1.5rem; margin-bottom: 20px;">Ваш показник: <span id="final-percent" style="font-weight: 800;">0%</span></div>
+    <p id="result-message"></p>
+    <button class="main-btn" onclick="location.reload()">СПРОБУВАТИ ЩЕ РАЗ</button>
+</div>
 </div>
 
 <script>
@@ -139,7 +153,7 @@
     { q: "Кредитор — це той, хто:", a: ["Бере гроші в борг", "Надає гроші в борг", "Продає товар", "Пише код"], correct: 1 }
 ];
 
-  let currentIdx = 0;
+ let currentIdx = 0;
     let score = 0;
     let canAnswer = true;
 
@@ -169,6 +183,69 @@
             btn.onclick = () => checkAnswer(i, btn);
             container.appendChild(btn);
         });
+    }
+
+    // Нова функція для розрахунку та відображення відсотка
+    function updateAccuracyUI() {
+        const answeredSoFar = currentIdx + 1; // Рахуємо поточне завершене питання
+        const accuracy = Math.round((score / answeredSoFar) * 100);
+        const accElement = document.getElementById('accuracy-live');
+        
+        accElement.innerText = `Точність: ${accuracy}%`;
+        
+        // Динамічна зміна кольору
+        if (accuracy >= 80) accElement.style.color = "#22c55e"; // Зелений
+        else if (accuracy >= 50) accElement.style.color = "#f59e0b"; // Жовтий
+        else accElement.style.color = "#ef4444"; // Червоний
+        
+        return accuracy;
+    }
+
+    function checkAnswer(idx, btn) {
+        if (!canAnswer) return;
+        canAnswer = false;
+        
+        const correctIdx = quizData[currentIdx].correct;
+        const options = document.querySelectorAll('.btn-option');
+
+        if (idx === correctIdx) {
+            score++;
+            btn.classList.add('correct');
+            sounds.correct();
+        } else {
+            btn.classList.add('wrong');
+            options[correctIdx].classList.add('correct');
+            sounds.wrong();
+        }
+
+        // Оновлюємо відсоток після кожної відповіді
+        updateAccuracyUI();
+        document.getElementById('score-live').innerText = `Рахунок: ${score}`;
+
+        setTimeout(() => {
+            currentIdx++;
+            if (currentIdx < quizData.length) {
+                loadQuestion();
+            } else {
+                showResults();
+            }
+        }, 1000);
+    }
+
+    function showResults() {
+        document.getElementById('quiz-screen').classList.add('hidden');
+        document.getElementById('result-screen').classList.remove('hidden');
+        
+        const finalPercent = Math.round((score / quizData.length) * 100);
+        
+        document.getElementById('final-score').innerText = `${score} / ${quizData.length}`;
+        document.getElementById('final-percent').innerText = `${finalPercent}%`;
+        document.getElementById('final-percent').style.color = finalPercent >= 70 ? "#22c55e" : "#ef4444";
+        
+        sounds.finish();
+
+        let msg = finalPercent >= 70 ? "Чудовий результат! Ви готові до вступу в ПУЕТ." : "Варто ще трохи підтягнути теорію.";
+        document.getElementById('result-message').innerText = msg;
     }
 
     function checkAnswer(idx, btn) {
@@ -207,5 +284,6 @@
 
 </body>
 </html>
+
 
 
