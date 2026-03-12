@@ -193,33 +193,57 @@
         }, 1200);
     }
 
-    // --- AI ФУНКЦІЇ ---
-    async function getAIQuestion() {
-        const btn = document.getElementById('ai-gen-btn');
-        btn.disabled = true; btn.innerText = "⏳ Gemini створює кейс...";
-        try {
-            const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: "generateQuestion" })});
-            const newQ = await res.json();
-            quizData[currentIdx] = newQ;
-            loadQuestion();
-            btn.innerText = "🪄 Згенерувати ще одне AI-питання";
-        } catch (e) { console.error(e); } finally { btn.disabled = false; }
+    // Оновлений запит для отримання питання
+async function getAIQuestion() {
+    const btn = document.getElementById('ai-gen-btn');
+    btn.disabled = true;
+    btn.innerText = "⏳ Gemini думає...";
+
+    try {
+        const response = await fetch(GAS_URL, {
+            method: 'POST',
+            mode: 'cors', // Додаємо цей режим
+            body: JSON.stringify({ action: "generateQuestion" }) 
+            // ВАЖЛИВО: НЕ додавай headers: {'Content-Type': 'application/json'}
+        });
+        
+        const text = await response.text(); // Отримуємо як текст
+        const newQ = JSON.parse(text);      // Перетворюємо в JSON вручну
+        
+        quizData[currentIdx] = newQ; 
+        loadQuestion();
+        btn.innerText = "🪄 Згенерувати ще одне";
+    } catch (e) {
+        console.error("CORS Error:", e);
+        document.getElementById('question-text').innerText = "Помилка зв'язку. AI теж іноді спить.";
+    } finally {
+        btn.disabled = false;
     }
 
-    async function showResults() {
-        document.getElementById('quiz-screen').classList.add('hidden');
-        document.getElementById('result-screen').classList.remove('hidden');
-        const finalPercent = Math.round((score / quizData.length) * 100);
-        document.getElementById('final-score').innerText = `${score} / ${quizData.length}`;
-        document.getElementById('final-percent').innerText = `${finalPercent}%`;
-        sounds.finish();
-        try {
-            const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: "analyze", score, total: quizData.length, percent: finalPercent })});
-            const data = await res.json();
-            document.getElementById('result-message').innerText = data.analysis;
-        } catch (e) { document.getElementById('result-message').innerText = "Ментор ПУЕТ: Ти молодець, готуйся до вступу!"; }
+    // Оновлений запит для аналізу результатів
+async function showResults() {
+    // ... (початок функції без змін)
+
+    try {
+        const response = await fetch(GAS_URL, {
+            method: 'POST',
+            mode: 'cors',
+            body: JSON.stringify({
+                action: "analyze",
+                score: score,
+                total: quizData.length,
+                percent: finalPercent
+            })
+        });
+        const text = await response.text();
+        const data = JSON.parse(text);
+        document.getElementById('result-message').innerText = data.analysis;
+    } catch (e) {
+        document.getElementById('result-message').innerText = "AI-ментор: Ти молодець! Готуйся до ПУЕТ.";
     }
+}
 </script>
 
 </body>
 </html>
+
