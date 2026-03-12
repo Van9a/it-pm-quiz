@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IT PM Testing Platform</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --bg: #f8fafc;
+            --text: #1e293b;
+            --white: #ffffff;
+        }
+
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); color: var(--text); display: flex; justify-content: center; padding: 20px; }
+        .quiz-container { background: var(--white); max-width: 600px; width: 100%; padding: 30px; border-radius: 12px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+        h1 { font-size: 1.5rem; border-bottom: 2px solid var(--bg); padding-bottom: 10px; color: var(--primary); }
+        .stats { display: flex; justify-content: space-between; margin-bottom: 20px; font-size: 0.9rem; color: #64748b; }
+        .question { font-size: 1.2rem; font-weight: 600; margin-bottom: 20px; }
+        .options { display: flex; flex-direction: column; gap: 10px; }
+        .btn-option { padding: 12px 15px; border: 1px solid #e2e8f0; border-radius: 8px; cursor: pointer; text-align: left; transition: all 0.2s; background: var(--white); font-size: 1rem; }
+        .btn-option:hover { background: #eff6ff; border-color: var(--primary); }
+        .btn-option.correct { background: #dcfce7; border-color: #22c55e; }
+        .btn-option.wrong { background: #fee2e2; border-color: #ef4444; }
+        .hidden { display: none; }
+        #result-screen { text-align: center; }
+        .score-circle { font-size: 3rem; font-weight: 800; color: var(--primary); margin: 20px 0; }
+        .restart-btn { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; margin-top: 15px; }
+    </style>
+</head>
+<body>
+
+<div class="quiz-container">
+    <div id="quiz-screen">
+        <h1>Менеджмент IT-проєктів</h1>
+        <div class="stats">
+            <span id="progress">Питання 1 з 5</span>
+            <span id="score-live">Рахунок: 0</span>
+        </div>
+        <div class="question" id="question-text">Завантаження...</div>
+        <div class="options" id="options-container"></div>
+    </div>
+
+    <div id="result-screen" class="hidden">
+        <h1>Тест завершено!</h1>
+        <p>Ваш результат:</p>
+        <div class="score-circle" id="final-score">0</div>
+        <p id="result-message"></p>
+        <button class="restart-btn" onclick="restartQuiz()">Спробувати ще раз</button>
+    </div>
+</div>
+
+<script>
+    const quizData = [
+        {
+            q: "Яка роль у Scrum відповідає за максимізацію цінності продукту?",
+            a: ["Scrum Master", "Product Owner", "Development Team", "Project Manager"],
+            correct: 1
+        },
+        {
+            q: "Що таке 'Triple Constraint' (Потрійне обмеження) в управлінні проєктами?",
+            a: ["Час, Вартість, Обсяг", "Якість, Ризики, Люди", "План, Код, Тест", "Б
