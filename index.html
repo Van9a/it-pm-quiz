@@ -3,95 +3,90 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IT PM Exam Trainer</title>
+    <title>IT PM Exam Trainer + Gemini AI</title>
     <style>
-        :root { --primary: #2563eb; --bg: #f8fafc; --text: #1e293b; --white: #ffffff; }
+        :root { --primary: #2563eb; --ai-color: #8b5cf6; --bg: #f8fafc; --text: #1e293b; --white: #ffffff; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); display: flex; justify-content: center; padding: 20px; margin: 0; }
         .quiz-container { background: var(--white); max-width: 600px; width: 100%; padding: 30px; border-radius: 12px; box-shadow: 0 10px 15px rgba(0,0,0,0.1); margin-top: 50px; text-align: center; }
         .hidden { display: none !important; }
         h1 { color: var(--primary); margin-bottom: 20px; }
-        .stats { display: flex; justify-content: space-between; margin-bottom: 20px; font-size: 0.9rem; color: #64748b; }
-        .question { font-size: 1.2rem; font-weight: 600; margin-bottom: 20px; text-align: left; }
+        .stats { display: flex; justify-content: space-between; margin-bottom: 20px; font-size: 0.9rem; color: #64748b; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px; }
+        .question { font-size: 1.2rem; font-weight: 600; margin-bottom: 20px; text-align: left; line-height: 1.4; }
         .options { display: flex; flex-direction: column; gap: 10px; }
         .btn-option { padding: 12px 15px; border: 1px solid #e2e8f0; border-radius: 8px; cursor: pointer; text-align: left; background: var(--white); font-size: 1rem; transition: 0.2s; }
         .btn-option:hover { background: #eff6ff; border-color: var(--primary); }
-        .btn-option.correct { background: #dcfce7 !important; border-color: #22c55e !important; }
-        .btn-option.wrong { background: #fee2e2 !important; border-color: #ef4444 !important; }
-        .main-btn { background: var(--primary); color: white; border: none; padding: 15px 30px; border-radius: 8px; cursor: pointer; font-size: 1.2rem; font-weight: bold; }
+        .btn-option.correct { background: #dcfce7 !important; border-color: #22c55e !important; color: #166534; }
+        .btn-option.wrong { background: #fee2e2 !important; border-color: #ef4444 !important; color: #991b1b; }
+        .main-btn { background: var(--primary); color: white; border: none; padding: 15px 30px; border-radius: 8px; cursor: pointer; font-size: 1.1rem; font-weight: bold; width: 100%; transition: 0.3s; }
+        .main-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+        .ai-btn { background: var(--ai-color) !important; margin-top: 15px; font-size: 0.9rem !important; }
         .score-circle { font-size: 3.5rem; font-weight: 800; color: var(--primary); margin: 20px 0; }
+        #result-message { font-style: italic; color: #475569; line-height: 1.5; background: #f1f5f9; padding: 15px; border-radius: 8px; }
     </style>
 </head>
 <body>
 
 <div class="quiz-container">
     <div id="start-screen">
-        <h1>🎓 IT PM Trainer v2.0</h1>
-        <p>Готовий до вступу в ПУЕТ на 073 спеціальність?</p>
-        <p style="color: #64748b; font-size: 0.9rem; margin-bottom: 30px;">(При натисканні буде увімкнено звук)</p>
+        <h1>🎓 IT PM Trainer v3.0</h1>
+        <p>Готовий до вступу в ПУЕТ? <br>Тепер з підтримкою <b>Gemini AI</b></p>
         <button class="main-btn" onclick="startQuiz()">ПОЧАТИ ТЕСТ</button>
     </div>
 
     <div id="quiz-screen" class="hidden">
-    <div class="stats">
-        <span id="progress">Питання 1 з 50</span>
-        <span id="accuracy-live" style="font-weight: bold;">Точність: 0%</span>
-        <span id="score-live">Рахунок: 0</span>
-    </div>
-    <div class="question" id="question-text">Завантаження...</div>
-    <div class="options" id="options-container"></div>
+        <div class="stats">
+            <span id="progress">Питання 1 з 50</span>
+            <span id="accuracy-live" style="font-weight: bold;">Точність: 0%</span>
+            <span id="score-live">Рахунок: 0</span>
+        </div>
+        <div class="question" id="question-text">Завантаження...</div>
+        <div class="options" id="options-container"></div>
+        
+        <button id="ai-gen-btn" class="main-btn ai-btn" onclick="getAIQuestion()">
+            🪄 Замінити на складне AI-питання
+        </button>
     </div>
 
     <div id="result-screen" class="hidden">
-        <h1>Тест завершено!</h1>
+        <h1>Результат</h1>
         <div class="score-circle" id="final-score">0</div>
-        <p id="result-message"></p>
-        <button class="main-btn" onclick="location.reload()">СПРОБУВАТИ ЩЕ РАЗ</button>
+        <div style="font-size: 1.2rem; margin-bottom: 20px;">
+            Точність: <span id="final-percent" style="font-weight: 800;">0%</span>
+        </div>
+        <div id="result-message">AI-ментор готує аналіз...</div>
+        <button class="main-btn" style="margin-top: 20px;" onclick="location.reload()">СПРОБУВАТИ ЩЕ РАЗ</button>
     </div>
-
-
-
-<div id="result-screen" class="hidden">
-    <h1>Тест завершено!</h1>
-    <div class="score-circle" id="final-score">0</div>
-    <div style="font-size: 1.5rem; margin-bottom: 20px;">Ваш показник: <span id="final-percent" style="font-weight: 800;">0%</span></div>
-    <p id="result-message"></p>
-    <button class="main-btn" onclick="location.reload()">СПРОБУВАТИ ЩЕ РАЗ</button>
-</div>
 </div>
 
 <script>
-    // 1. АУДІО-СИНТЕЗАТОР (Web Audio API)
+    // --- НАЛАШТУВАННЯ ---
+    const GAS_URL = 'https://script.google.com/macros/s/AKfycbxWsbHUWUyxJzMrZR1r_Kbm34Qy_8Syo6GFAIZVl2Bt5Sop9l7fUX8Tr2ECHfcfhlVyfQ/exec'; 
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    
+    let currentIdx = 0;
+    let score = 0;
+    let canAnswer = true;
 
-    function playNote(frequency, duration, type = 'sine') {
-        const oscillator = audioCtx.createOscillator();
-        const gainNode = audioCtx.createGain();
-
-        oscillator.type = type;
-        oscillator.frequency.setValueAtTime(frequency, audioCtx.currentTime);
-        
-        gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
-
-        oscillator.connect(gainNode);
-        gainNode.connect(audioCtx.destination);
-
-        oscillator.start();
-        oscillator.stop(audioCtx.currentTime + duration);
+    // --- ЗВУКИ (Синтезатор) ---
+    function playNote(freq, dur, type = 'sine') {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + dur);
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.start(); osc.stop(audioCtx.currentTime + dur);
     }
 
     const sounds = {
-        correct: () => playNote(880, 0.2, 'sine'), 
+        correct: () => playNote(880, 0.2),
         wrong: () => playNote(220, 0.4, 'triangle'),
-        finish: () => {
-            playNote(523, 0.2); 
-            setTimeout(() => playNote(659, 0.2), 150);
-            setTimeout(() => playNote(783, 0.4), 300);
-        }
+        finish: () => { playNote(523, 0.2); setTimeout(()=>playNote(659,0.2),150); setTimeout(()=>playNote(783,0.4),300); }
     };
 
-    // 2. БАЗА ДАНИХ (50 питань)
-    const quizData = [
+    // --- ПИТАННЯ (50 штук) ---
+  const quizData = [
         // МЕНЕДЖМЕНТ
         { q: "Яка функція менеджменту є вихідною для всіх інших?", a: ["Організація", "Планування", "Мотивація", "Контроль"], correct: 1 },
         { q: "Хто є автором 'ієрархії потреб'?", a: ["Ф. Тейлор", "А. Маслоу", "М. Вебер", "А. Файоль"], correct: 1 },
@@ -146,15 +141,11 @@
         { q: "ФОП — це:", a: ["Програма", "Фізична особа-підприємець", "Фірма", "Фонд"], correct: 1 },
         { q: "Трудовий договір — це угода між:", a: ["Фірмами", "Працівником і роботодавцем", "Банком і клієнтом", "Державою"], correct: 1 },
         { q: "Кредитор — це той, хто:", a: ["Бере в борг", "Надає в борг", "Продає", "Пише код"], correct: 1 }
-    ];
+    ];;
 
-    let currentIdx = 0;
-    let score = 0;
-    let canAnswer = true;
-
-    // 3. ФУНКЦІЇ ЛОГІКИ
+    // --- ЛОГІКА ТЕСТУ ---
     function startQuiz() {
-        if (audioCtx.state === 'suspended') { audioCtx.resume(); }
+        if (audioCtx.state === 'suspended') audioCtx.resume();
         document.getElementById('start-screen').classList.add('hidden');
         document.getElementById('quiz-screen').classList.remove('hidden');
         quizData.sort(() => Math.random() - 0.5);
@@ -165,25 +156,20 @@
         const answeredCount = isAnswered ? currentIdx + 1 : currentIdx;
         document.getElementById('progress').innerText = `Питання ${currentIdx + 1} з ${quizData.length}`;
         document.getElementById('score-live').innerText = `Рахунок: ${score}`;
-        
         const accElement = document.getElementById('accuracy-live');
         if (answeredCount > 0) {
-            const accuracy = Math.round((score / answeredCount) * 100);
-            accElement.innerText = `Точність: ${accuracy}%`;
-            accElement.style.color = accuracy >= 80 ? "#22c55e" : (accuracy >= 50 ? "#f59e0b" : "#ef4444");
-        } else {
-            accElement.innerText = `Точність: 0%`;
-            accElement.style.color = "#64748b";
+            const acc = Math.round((score / answeredCount) * 100);
+            accElement.innerText = `Точність: ${acc}%`;
+            accElement.style.color = acc >= 80 ? "#22c55e" : (acc >= 50 ? "#f59e0b" : "#ef4444");
         }
     }
 
     function loadQuestion() {
         canAnswer = true;
         const q = quizData[currentIdx];
-        const container = document.getElementById('options-container');
         document.getElementById('question-text').innerText = q.q;
         updateStatsUI(false);
-        
+        const container = document.getElementById('options-container');
         container.innerHTML = '';
         q.a.forEach((opt, i) => {
             const btn = document.createElement('button');
@@ -197,88 +183,43 @@
     function checkAnswer(idx, btn) {
         if (!canAnswer) return;
         canAnswer = false;
-        
         const correctIdx = quizData[currentIdx].correct;
-        const options = document.querySelectorAll('.btn-option');
-
-        if (idx === correctIdx) {
-            score++;
-            btn.classList.add('correct');
-            sounds.correct();
-        } else {
-            btn.classList.add('wrong');
-            options[correctIdx].classList.add('correct');
-            sounds.wrong();
-        }
-
+        if (idx === correctIdx) { score++; btn.classList.add('correct'); sounds.correct(); } 
+        else { btn.classList.add('wrong'); document.querySelectorAll('.btn-option')[correctIdx].classList.add('correct'); sounds.wrong(); }
         updateStatsUI(true);
-
         setTimeout(() => {
             currentIdx++;
-            if (currentIdx < quizData.length) {
-                loadQuestion();
-            } else {
-                showResults();
-            }
-        }, 1000);
+            if (currentIdx < quizData.length) loadQuestion(); else showResults();
+        }, 1200);
     }
 
-   async function showResults() {
-    // Ховаємо тест, показуємо екран результатів
-    document.getElementById('quiz-screen').classList.add('hidden');
-    document.getElementById('result-screen').classList.remove('hidden');
-    
-    const finalPercent = Math.round((score / quizData.length) * 100);
-    document.getElementById('final-score').innerText = `${score} / ${quizData.length}`;
-    
-    // Оновлюємо фінальний відсоток, якщо такий елемент є
-    const fp = document.getElementById('final-percent');
-    if(fp) {
-        fp.innerText = `${finalPercent}%`;
-        fp.style.color = finalPercent >= 70 ? "#22c55e" : "#ef4444";
+    // --- AI ФУНКЦІЇ ---
+    async function getAIQuestion() {
+        const btn = document.getElementById('ai-gen-btn');
+        btn.disabled = true; btn.innerText = "⏳ Gemini створює кейс...";
+        try {
+            const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: "generateQuestion" })});
+            const newQ = await res.json();
+            quizData[currentIdx] = newQ;
+            loadQuestion();
+            btn.innerText = "🪄 Згенерувати ще одне AI-питання";
+        } catch (e) { console.error(e); } finally { btn.disabled = false; }
     }
 
-    // AI-аналіз через Google Apps Script
-    const resultMsg = document.getElementById('result-message');
-    resultMsg.innerHTML = `<div style="color: #2563eb;">AI-ментор аналізує твій результат...</div>`;
-
-    try {
-        const response = await fetch('https://script.google.com/macros/s/AKfycbxWsbHUWUyxJzMrZR1r_Kbm34Qy_8Syo6GFAIZVl2Bt5Sop9l7fUX8Tr2ECHfcfhlVyfQ/exec', {
-            method: 'POST',
-            mode: 'no-cors', // Важливо для Google Apps Script
-            body: JSON.stringify({
-                score: score,
-                total: quizData.length,
-                percent: finalPercent
-            })
-        });
-
-        /* Оскільки ми використовуємо 'no-cors' для GAS, ми не зможемо 
-           прочитати JSON напряму через обмеження браузера. 
-           Для повноцінного аналізу Gemini краще використовувати 
-           Google Apps Script як веб-програму, що віддає результат.
-        */
-        
-        // Поки що виведемо стандартне повідомлення, 
-        // якщо хочеш бачити текст від Gemini, напиши мені, 
-        // я підкажу, як обійти CORS у GAS.
-        resultMsg.innerText = finalPercent >= 70 ? 
-            "AI підтверджує: твої шанси на вступ до ПУЕТ дуже високі! 🔥" : 
-            "AI радить: зверни більше уваги на блок Економіки та Менеджменту.";
-
-    } catch (e) {
-        resultMsg.innerText = "Ментор зараз поза зоною досяжності, але твій результат зафіксовано!";
+    async function showResults() {
+        document.getElementById('quiz-screen').classList.add('hidden');
+        document.getElementById('result-screen').classList.remove('hidden');
+        const finalPercent = Math.round((score / quizData.length) * 100);
+        document.getElementById('final-score').innerText = `${score} / ${quizData.length}`;
+        document.getElementById('final-percent').innerText = `${finalPercent}%`;
+        sounds.finish();
+        try {
+            const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: "analyze", score, total: quizData.length, percent: finalPercent })});
+            const data = await res.json();
+            document.getElementById('result-message').innerText = data.analysis;
+        } catch (e) { document.getElementById('result-message').innerText = "Ментор ПУЕТ: Ти молодець, готуйся до вступу!"; }
     }
-
-    sounds.finish();
-}
 </script>
+
 </body>
 </html>
-
-
-
-
-
-
-
