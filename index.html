@@ -49,17 +49,36 @@
 </div>
 
 <script>
-    // Звуки (використовуємо стабільні CDN)
-   const sounds = {
-    // Звук успіху (дзвіночок)
-    correct: new Audio('https://cdn.jsdelivr.net/gh/r-lua/Sound-Effects@master/Success.mp3'), 
-    
-    // Звук помилки (короткий базз)
-    wrong: new Audio('https://cdn.jsdelivr.net/gh/r-lua/Sound-Effects@master/Error.mp3'),
-    
-    // Оплески для фіналу
-    finish: new Audio('https://cdn.jsdelivr.net/gh/r-lua/Sound-Effects@master/Applauses.mp3')
-};
+  // Створюємо аудіо-контекст (генератор звуку)
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    // Функція-синтезатор "піку"
+    function playNote(frequency, duration, type = 'sine') {
+        const oscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+
+        oscillator.type = type;
+        oscillator.frequency.setValueAtTime(frequency, audioCtx.currentTime);
+        
+        gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+
+        oscillator.start();
+        oscillator.stop(audioCtx.currentTime + duration);
+    }
+
+    const sounds = {
+        correct: () => playNote(880, 0.2, 'sine'),  // Високий приємний звук
+        wrong: () => playNote(220, 0.4, 'triangle'), // Низький "базз"
+        finish: () => { // Маленька мелодія перемоги
+            playNote(523, 0.2); 
+            setTimeout(() => playNote(659, 0.2), 150);
+            setTimeout(() => playNote(783, 0.4), 300);
+        }
+    };
    const quizData = [
     // --- МЕНЕДЖМЕНТ (1-15) ---
     { q: "Яка функція менеджменту є вихідною для всіх інших?", a: ["Організація", "Планування", "Мотивація", "Контроль"], correct: 1 },
@@ -120,17 +139,18 @@
     { q: "Кредитор — це той, хто:", a: ["Бере гроші в борг", "Надає гроші в борг", "Продає товар", "Пише код"], correct: 1 }
 ];
 
-    let currentIdx = 0;
+  let currentIdx = 0;
     let score = 0;
     let canAnswer = true;
 
     function startQuiz() {
-        // "Будимо" аудіо-контекст кліком
-        Object.values(sounds).forEach(s => { s.play(); s.pause(); s.currentTime = 0; });
+        // Активуємо аудіо-контекст (важливо для браузера!)
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
         
         document.getElementById('start-screen').classList.add('hidden');
         document.getElementById('quiz-screen').classList.remove('hidden');
-        
         quizData.sort(() => Math.random() - 0.5);
         loadQuestion();
     }
@@ -139,11 +159,9 @@
         canAnswer = true;
         const q = quizData[currentIdx];
         const container = document.getElementById('options-container');
-        
         document.getElementById('question-text').innerText = q.q;
         document.getElementById('progress').innerText = `Питання ${currentIdx + 1} з ${quizData.length}`;
         container.innerHTML = '';
-        
         q.a.forEach((opt, i) => {
             const btn = document.createElement('button');
             btn.className = 'btn-option';
@@ -156,29 +174,24 @@
     function checkAnswer(idx, btn) {
         if (!canAnswer) return;
         canAnswer = false;
-        
         const correctIdx = quizData[currentIdx].correct;
         const options = document.querySelectorAll('.btn-option');
 
         if (idx === correctIdx) {
             score++;
             btn.classList.add('correct');
-            sounds.correct.play().catch(e => console.log("Audio error:", e));
+            sounds.correct(); // Викликаємо синтезатор
         } else {
             btn.classList.add('wrong');
             options[correctIdx].classList.add('correct');
-            sounds.wrong.play().catch(e => console.log("Audio error:", e));
+            sounds.wrong(); // Викликаємо синтезатор
         }
 
         document.getElementById('score-live').innerText = `Рахунок: ${score}`;
-
         setTimeout(() => {
             currentIdx++;
-            if (currentIdx < quizData.length) {
-                loadQuestion();
-            } else {
-                showResults();
-            }
+            if (currentIdx < quizData.length) { loadQuestion(); } 
+            else { showResults(); }
         }, 1000);
     }
 
@@ -186,9 +199,7 @@
         document.getElementById('quiz-screen').classList.add('hidden');
         document.getElementById('result-screen').classList.remove('hidden');
         document.getElementById('final-score').innerText = `${score} / ${quizData.length}`;
-        
-        sounds.finish.play();
-
+        sounds.finish(); // Тріумфальний звук
         let msg = score >= (quizData.length * 0.7) ? "Ти готовий до вступу в ПУЕТ! 🔥" : "Треба ще трохи підтягнути менеджмент.";
         document.getElementById('result-message').innerText = msg;
     }
@@ -196,4 +207,5 @@
 
 </body>
 </html>
+
 
