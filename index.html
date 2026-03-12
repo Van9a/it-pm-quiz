@@ -46,11 +46,11 @@
 <script>
 
     // Посилання на звукові ефекти (можеш замінити на власні)
-    const sounds = {
-        correct: new Audio('https://www.soundjay.com/buttons/sounds/button-3.mp3'),
-        wrong: new Audio('https://www.soundjay.com/buttons/sounds/button-10.mp3'),
-        finish: new Audio('https://www.soundjay.com/human/sounds/applause-01.mp3')
-    };
+   const sounds = {
+    correct: new Audio('https://actions.google.com/sounds/v1/foley/beeps_error_set.ogg'), // Короткий біп
+    wrong: new Audio('https://actions.google.com/sounds/v1/foley/wooden_door_knock.ogg'), // Стук
+    finish: new Audio('https://actions.google.com/sounds/v1/human/applause_moderate.ogg') // Оплески
+};
     
     const quizData = [
     // --- МЕНЕДЖМЕНТ (1-15) ---
@@ -116,12 +116,18 @@
     let score = 0;
     let canAnswer = true;
 
-    function initQuiz() {
-        quizData.sort(() => Math.random() - 0.5); // Додай цей рядок
-        currentIdx = 0;
-        score = 0;
-        loadQuestion();
-    }
+  function initQuiz() {
+    // Примусове завантаження аудіо
+    Object.values(sounds).forEach(s => {
+        s.load();
+        s.volume = 0.7; // Встановлюємо гучність на 70%
+    });
+
+    quizData.sort(() => Math.random() - 0.5);
+    currentIdx = 0;
+    score = 0;
+    loadQuestion();
+}
 
     function loadQuestion() {
         canAnswer = true;
@@ -186,5 +192,6 @@
 
 </body>
 </html>
+
 
 
