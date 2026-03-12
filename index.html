@@ -59,7 +59,7 @@
 </div>
 
 <script>
-    // --- НАЛАШТУВАННЯ ---
+    // 1. НАЛАШТУВАННЯ (ОБОВ'ЯЗКОВО ВСТАВ СВІЙ URL)
     const GAS_URL = 'https://script.google.com/macros/s/AKfycbxWsbHUWUyxJzMrZR1r_Kbm34Qy_8Syo6GFAIZVl2Bt5Sop9l7fUX8Tr2ECHfcfhlVyfQ/exec'; 
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     
@@ -67,7 +67,7 @@
     let score = 0;
     let canAnswer = true;
 
-    // --- ЗВУКИ (Синтезатор) ---
+    // 2. ЗВУКИ (Синтезатор)
     function playNote(freq, dur, type = 'sine') {
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
@@ -82,11 +82,15 @@
     const sounds = {
         correct: () => playNote(880, 0.2),
         wrong: () => playNote(220, 0.4, 'triangle'),
-        finish: () => { playNote(523, 0.2); setTimeout(()=>playNote(659,0.2),150); setTimeout(()=>playNote(783,0.4),300); }
+        finish: () => { 
+            playNote(523, 0.2); 
+            setTimeout(() => playNote(659, 0.2), 150); 
+            setTimeout(() => playNote(783, 0.4), 300); 
+        }
     };
 
-    // --- ПИТАННЯ (50 штук) ---
-  const quizData = [
+    // 3. БАЗА ДАНИХ ПИТАНЬ
+    const quizData = [
         // МЕНЕДЖМЕНТ
         { q: "Яка функція менеджменту є вихідною для всіх інших?", a: ["Організація", "Планування", "Мотивація", "Контроль"], correct: 1 },
         { q: "Хто є автором 'ієрархії потреб'?", a: ["Ф. Тейлор", "А. Маслоу", "М. Вебер", "А. Файоль"], correct: 1 },
@@ -141,9 +145,9 @@
         { q: "ФОП — це:", a: ["Програма", "Фізична особа-підприємець", "Фірма", "Фонд"], correct: 1 },
         { q: "Трудовий договір — це угода між:", a: ["Фірмами", "Працівником і роботодавцем", "Банком і клієнтом", "Державою"], correct: 1 },
         { q: "Кредитор — це той, хто:", a: ["Бере в борг", "Надає в борг", "Продає", "Пише код"], correct: 1 }
-    ];;
+    ];
 
-    // --- ЛОГІКА ТЕСТУ ---
+    // 4. ЛОГІКА ТЕСТУ
     function startQuiz() {
         if (audioCtx.state === 'suspended') audioCtx.resume();
         document.getElementById('start-screen').classList.add('hidden');
@@ -193,57 +197,45 @@
         }, 1200);
     }
 
-    // Оновлений запит для отримання питання
-async function getAIQuestion() {
-    const btn = document.getElementById('ai-gen-btn');
-    btn.disabled = true;
-    btn.innerText = "⏳ Gemini думає...";
-
-    try {
-        const response = await fetch(GAS_URL, {
-            method: 'POST',
-            mode: 'cors', // Додаємо цей режим
-            body: JSON.stringify({ action: "generateQuestion" }) 
-            // ВАЖЛИВО: НЕ додавай headers: {'Content-Type': 'application/json'}
-        });
-        
-        const text = await response.text(); // Отримуємо як текст
-        const newQ = JSON.parse(text);      // Перетворюємо в JSON вручну
-        
-        quizData[currentIdx] = newQ; 
-        loadQuestion();
-        btn.innerText = "🪄 Згенерувати ще одне";
-    } catch (e) {
-        console.error("CORS Error:", e);
-        document.getElementById('question-text').innerText = "Помилка зв'язку. AI теж іноді спить.";
-    } finally {
-        btn.disabled = false;
+    // 5. ФУНКЦІЇ AI
+    async function getAIQuestion() {
+        const btn = document.getElementById('ai-gen-btn');
+        btn.disabled = true; btn.innerText = "⏳ Gemini думає...";
+        try {
+            const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: "generateQuestion" })});
+            const text = await res.text();
+            const newQ = JSON.parse(text);
+            quizData[currentIdx] = newQ;
+            loadQuestion();
+            btn.innerText = "🪄 Згенерувати ще одне";
+        } catch (e) { 
+            console.error(e); 
+            document.getElementById('question-text').innerText = "Помилка зв'язку з AI.";
+        } finally { btn.disabled = false; }
     }
 
-    // Оновлений запит для аналізу результатів
-async function showResults() {
-    // ... (початок функції без змін)
+    async function showResults() {
+        document.getElementById('quiz-screen').classList.add('hidden');
+        document.getElementById('result-screen').classList.remove('hidden');
+        const finalPercent = Math.round((score / quizData.length) * 100);
+        document.getElementById('final-score').innerText = `${score} / ${quizData.length}`;
+        const fp = document.getElementById('final-percent');
+        if (fp) fp.innerText = `${finalPercent}%`;
+        
+        sounds.finish();
+        const msg = document.getElementById('result-message');
+        msg.innerText = "AI-ментор готує аналіз...";
 
-    try {
-        const response = await fetch(GAS_URL, {
-            method: 'POST',
-            mode: 'cors',
-            body: JSON.stringify({
-                action: "analyze",
-                score: score,
-                total: quizData.length,
-                percent: finalPercent
-            })
-        });
-        const text = await response.text();
-        const data = JSON.parse(text);
-        document.getElementById('result-message').innerText = data.analysis;
-    } catch (e) {
-        document.getElementById('result-message').innerText = "AI-ментор: Ти молодець! Готуйся до ПУЕТ.";
+        try {
+            const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: "analyze", score, total: quizData.length, percent: finalPercent })});
+            const text = await res.text();
+            const data = JSON.parse(text);
+            msg.innerText = data.analysis;
+        } catch (e) { msg.innerText = "Ти молодець! ПУЕТ чекає на тебе."; }
     }
-}
 </script>
 
 </body>
 </html>
+
 
