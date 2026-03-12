@@ -44,6 +44,14 @@
 </div>
 
 <script>
+
+    // Посилання на звукові ефекти (можеш замінити на власні)
+    const sounds = {
+        correct: new Audio('https://www.soundjay.com/buttons/sounds/button-3.mp3'),
+        wrong: new Audio('https://www.soundjay.com/buttons/sounds/button-10.mp3'),
+        finish: new Audio('https://www.soundjay.com/human/sounds/applause-01.mp3')
+    };
+    
     const quizData = [
     // --- МЕНЕДЖМЕНТ (1-15) ---
     { q: "Яка функція менеджменту є вихідною для всіх інших?", a: ["Організація", "Планування", "Мотивація", "Контроль"], correct: 1 },
@@ -109,6 +117,7 @@
     let canAnswer = true;
 
     function initQuiz() {
+        quizData.sort(() => Math.random() - 0.5); // Додай цей рядок
         currentIdx = 0;
         score = 0;
         loadQuestion();
@@ -142,9 +151,11 @@
         if (idx === correctIdx) {
             score++;
             btn.classList.add('correct');
+            sounds.correct.play(); // Грав звук успіху
         } else {
             btn.classList.add('wrong');
             options[correctIdx].classList.add('correct');
+            sounds.wrong.play(); // Грав звук помилки
         }
 
         document.getElementById('score-live').innerText = `Рахунок: ${score}`;
@@ -164,14 +175,16 @@
         document.getElementById('result-screen').classList.remove('hidden');
         document.getElementById('final-score').innerText = `${score} / ${quizData.length}`;
         
-        let msg = score >= 7 ? "Чудовий результат! Ви готові до магістратури." : "Варто ще трохи підтягнути теорію менеджменту.";
+        sounds.finish.play(); // Фінальні оплески
+
+        let msg = score >= (quizData.length * 0.7) ? "Чудовий результат! Ви готові до магістратури ПУЕТ." : "Варто ще трохи підтягнути теорію менеджменту.";
         document.getElementById('result-message').innerText = msg;
     }
 
-    // Запуск після завантаження DOM
     document.addEventListener('DOMContentLoaded', initQuiz);
 </script>
 
 </body>
 </html>
+
 
