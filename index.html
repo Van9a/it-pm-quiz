@@ -206,18 +206,18 @@
     try {
         const response = await fetch(GAS_URL, {
             method: 'POST',
-            // НЕ додавай headers: {'Content-Type': 'application/json'} !
-            // Це дозволить браузеру зробити "простий запит" без CORS-перевірки
             body: JSON.stringify({ action: "generateQuestion" })
         });
         
-        const data = await response.json();
+        const text = await response.text(); // Отримуємо текст
+        const data = JSON.parse(text);      // Перетворюємо в об'єкт
+        
         quizData[currentIdx] = data;
         loadQuestion();
         btn.innerText = "🪄 Згенерувати ще одне";
     } catch (e) {
-        console.error(e);
-        document.getElementById('question-text').innerText = "Помилка: AI не зміг відповісти. Перевір консоль.";
+        console.error("Помилка:", e);
+        document.getElementById('question-text').innerText = "AI тимчасово не відповів, спробуй ще раз!";
     } finally {
         btn.disabled = false;
     }
@@ -235,17 +235,28 @@
         const msg = document.getElementById('result-message');
         msg.innerText = "AI-ментор готує аналіз...";
 
-        try {
-            const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: "analyze", score, total: quizData.length, percent: finalPercent })});
-            const text = await res.text();
-            const data = JSON.parse(text);
-            msg.innerText = data.analysis;
-        } catch (e) { msg.innerText = "Ти молодець! ПУЕТ чекає на тебе."; }
+      try {
+        const res = await fetch(GAS_URL, { 
+            method: 'POST', 
+            body: JSON.stringify({ 
+                action: "analyze", 
+                score: score, 
+                total: quizData.length, 
+                percent: finalPercent 
+            }) 
+        });
+        const text = await res.text();
+        const data = JSON.parse(text);
+        msg.innerText = data.analysis; // Тут з'явиться текст від Gemini
+    } catch (e) { 
+        msg.innerText = "Ти молодець! ПУЕТ чекає на тебе. (AI зараз відпочиває)"; 
+    }
     }
 </script>
 
 </body>
 </html>
+
 
 
 
