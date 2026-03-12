@@ -5,58 +5,125 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>IT PM Testing Platform</title>
     <style>
-        :root {
-            --primary: #2563eb;
-            --bg: #f8fafc;
-            --text: #1e293b;
-            --white: #ffffff;
-        }
-
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); color: var(--text); display: flex; justify-content: center; padding: 20px; }
-        .quiz-container { background: var(--white); max-width: 600px; width: 100%; padding: 30px; border-radius: 12px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
-        h1 { font-size: 1.5rem; border-bottom: 2px solid var(--bg); padding-bottom: 10px; color: var(--primary); }
+        :root { --primary: #2563eb; --bg: #f8fafc; --text: #1e293b; --white: #ffffff; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); display: flex; justify-content: center; padding: 20px; margin: 0; }
+        .quiz-container { background: var(--white); max-width: 600px; width: 100%; padding: 30px; border-radius: 12px; box-shadow: 0 10px 15px rgba(0,0,0,0.1); margin-top: 50px; }
+        h1 { font-size: 1.5rem; color: var(--primary); border-bottom: 2px solid var(--bg); padding-bottom: 10px; }
         .stats { display: flex; justify-content: space-between; margin-bottom: 20px; font-size: 0.9rem; color: #64748b; }
-        .question { font-size: 1.2rem; font-weight: 600; margin-bottom: 20px; }
+        .question { font-size: 1.2rem; font-weight: 600; margin-bottom: 20px; line-height: 1.4; }
         .options { display: flex; flex-direction: column; gap: 10px; }
         .btn-option { padding: 12px 15px; border: 1px solid #e2e8f0; border-radius: 8px; cursor: pointer; text-align: left; transition: all 0.2s; background: var(--white); font-size: 1rem; }
         .btn-option:hover { background: #eff6ff; border-color: var(--primary); }
-        .btn-option.correct { background: #dcfce7; border-color: #22c55e; }
-        .btn-option.wrong { background: #fee2e2; border-color: #ef4444; }
+        .btn-option.correct { background: #dcfce7 !important; border-color: #22c55e !important; color: #166534; }
+        .btn-option.wrong { background: #fee2e2 !important; border-color: #ef4444 !important; color: #991b1b; }
         .hidden { display: none; }
         #result-screen { text-align: center; }
         .score-circle { font-size: 3rem; font-weight: 800; color: var(--primary); margin: 20px 0; }
-        .restart-btn { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; margin-top: 15px; }
+        .restart-btn { background: var(--primary); color: white; border: none; padding: 12px 25px; border-radius: 6px; cursor: pointer; font-size: 1rem; }
     </style>
 </head>
 <body>
 
 <div class="quiz-container">
     <div id="quiz-screen">
-        <h1>Менеджмент IT-проєктів</h1>
+        <h1>Менеджмент IT-проєктів (v1.1)</h1>
         <div class="stats">
-            <span id="progress">Питання 1 з 5</span>
+            <span id="progress">Завантаження...</span>
             <span id="score-live">Рахунок: 0</span>
         </div>
-        <div class="question" id="question-text">Завантаження...</div>
+        <div class="question" id="question-text">Підготовка питань...</div>
         <div class="options" id="options-container"></div>
     </div>
 
     <div id="result-screen" class="hidden">
         <h1>Тест завершено!</h1>
-        <p>Ваш результат:</p>
         <div class="score-circle" id="final-score">0</div>
         <p id="result-message"></p>
-        <button class="restart-btn" onclick="restartQuiz()">Спробувати ще раз</button>
+        <button class="restart-btn" onclick="location.reload()">Спробувати ще раз</button>
     </div>
 </div>
 
 <script>
     const quizData = [
-        {
-            q: "Яка роль у Scrum відповідає за максимізацію цінності продукту?",
-            a: ["Scrum Master", "Product Owner", "Development Team", "Project Manager"],
-            correct: 1
-        },
-        {
-            q: "Що таке 'Triple Constraint' (Потрійне обмеження) в управлінні проєктами?",
-            a: ["Час, Вартість, Обсяг", "Якість, Ризики, Люди", "План, Код, Тест", "Б
+        { q: "Яка роль у Scrum відповідає за максимізацію цінності продукту?", a: ["Scrum Master", "Product Owner", "Development Team", "Project Manager"], correct: 1 },
+        { q: "Що таке 'Triple Constraint' в управлінні проєктами?", a: ["Час, Вартість, Обсяг", "Якість, Ризики, Люди", "План, Код, Тест", "Бюджет, Технології, Маркетинг"], correct: 0 },
+        { q: "Методологія Waterfall найкраще підходить для:", a: ["Стартапів", "Проєктів з чіткими вимогами", "Розробки мобільних ігор", "R&D досліджень"], correct: 1 },
+        { q: "Який документ визначає межі проєкту на етапі ініціації?", a: ["Backlog", "Project Charter", "Gantt Chart", "Definition of Done"], correct: 1 },
+        { q: "Що означає 'Daily Stand-up' в Agile?", a: ["Презентація", "Коротка координаційна зустріч", "Обговорення зарплат", "Планування на місяць"], correct: 1 },
+        { q: "Критичний шлях у проєкті — це:", a: ["Найлегший шлях", "Найдовша послідовність завдань", "Список ризиків", "Команда розробки"], correct: 1 },
+        { q: "SWOT-аналіз використовується для:", a: ["Написання коду", "Аналізу сильних і слабких сторін", "Тестування UI", "Розрахунку зарплати"], correct: 1 },
+        { q: "Хто такий Стейкхолдер?", a: ["Тільки замовник", "Будь-яка зацікавлена особа", "Тільки програміст", "Директор банку"], correct: 1 },
+        { q: "MVP — це:", a: ["Найкращий гравець", "Мінімально життєздатний продукт", "Найдорожчий проєкт", "Версія для видалення"], correct: 1 },
+        { q: "Sprint Retrospective проводиться для:", a: ["Демонстрації коду", "Аналізу роботи команди та покращення процесів", "Планування бюджету", "Звільнення працівників"], correct: 1 }
+    ];
+
+    let currentIdx = 0;
+    let score = 0;
+    let canAnswer = true;
+
+    function initQuiz() {
+        currentIdx = 0;
+        score = 0;
+        loadQuestion();
+    }
+
+    function loadQuestion() {
+        canAnswer = true;
+        const q = quizData[currentIdx];
+        const container = document.getElementById('options-container');
+        
+        document.getElementById('question-text').innerText = q.q;
+        document.getElementById('progress').innerText = `Питання ${currentIdx + 1} з ${quizData.length}`;
+        container.innerHTML = '';
+        
+        q.a.forEach((opt, i) => {
+            const btn = document.createElement('button');
+            btn.className = 'btn-option';
+            btn.innerText = opt;
+            btn.onclick = () => checkAnswer(i, btn);
+            container.appendChild(btn);
+        });
+    }
+
+    function checkAnswer(idx, btn) {
+        if (!canAnswer) return;
+        canAnswer = false;
+        
+        const correctIdx = quizData[currentIdx].correct;
+        const options = document.querySelectorAll('.btn-option');
+
+        if (idx === correctIdx) {
+            score++;
+            btn.classList.add('correct');
+        } else {
+            btn.classList.add('wrong');
+            options[correctIdx].classList.add('correct');
+        }
+
+        document.getElementById('score-live').innerText = `Рахунок: ${score}`;
+
+        setTimeout(() => {
+            currentIdx++;
+            if (currentIdx < quizData.length) {
+                loadQuestion();
+            } else {
+                showResults();
+            }
+        }, 1200);
+    }
+
+    function showResults() {
+        document.getElementById('quiz-screen').classList.add('hidden');
+        document.getElementById('result-screen').classList.remove('hidden');
+        document.getElementById('final-score').innerText = `${score} / ${quizData.length}`;
+        
+        let msg = score >= 7 ? "Чудовий результат! Ви готові до магістратури." : "Варто ще трохи підтягнути теорію менеджменту.";
+        document.getElementById('result-message').innerText = msg;
+    }
+
+    // Запуск після завантаження DOM
+    document.addEventListener('DOMContentLoaded', initQuiz);
+</script>
+
+</body>
+</html>
