@@ -199,20 +199,29 @@
 
     // 5. ФУНКЦІЇ AI
     async function getAIQuestion() {
-        const btn = document.getElementById('ai-gen-btn');
-        btn.disabled = true; btn.innerText = "⏳ Gemini думає...";
-        try {
-            const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: "generateQuestion" })});
-            const text = await res.text();
-            const newQ = JSON.parse(text);
-            quizData[currentIdx] = newQ;
-            loadQuestion();
-            btn.innerText = "🪄 Згенерувати ще одне";
-        } catch (e) { 
-            console.error(e); 
-            document.getElementById('question-text').innerText = "Помилка зв'язку з AI.";
-        } finally { btn.disabled = false; }
+    const btn = document.getElementById('ai-gen-btn');
+    btn.disabled = true;
+    btn.innerText = "⏳ Gemini думає...";
+
+    try {
+        const response = await fetch(GAS_URL, {
+            method: 'POST',
+            // НЕ додавай headers: {'Content-Type': 'application/json'} !
+            // Це дозволить браузеру зробити "простий запит" без CORS-перевірки
+            body: JSON.stringify({ action: "generateQuestion" })
+        });
+        
+        const data = await response.json();
+        quizData[currentIdx] = data;
+        loadQuestion();
+        btn.innerText = "🪄 Згенерувати ще одне";
+    } catch (e) {
+        console.error(e);
+        document.getElementById('question-text').innerText = "Помилка: AI не зміг відповісти. Перевір консоль.";
+    } finally {
+        btn.disabled = false;
     }
+}
 
     async function showResults() {
         document.getElementById('quiz-screen').classList.add('hidden');
@@ -237,5 +246,6 @@
 
 </body>
 </html>
+
 
 
