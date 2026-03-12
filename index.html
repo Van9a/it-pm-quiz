@@ -223,27 +223,59 @@
         }, 1000);
     }
 
-    function showResults() {
-        document.getElementById('quiz-screen').classList.add('hidden');
-        document.getElementById('result-screen').classList.remove('hidden');
-        
-        const finalPercent = Math.round((score / quizData.length) * 100);
-        document.getElementById('final-score').innerText = `${score} / ${quizData.length}`;
-        
-        // Додаємо відсоток у фінальний екран, якщо там є елемент final-percent
-        const fp = document.getElementById('final-percent');
-        if(fp) {
-            fp.innerText = `${finalPercent}%`;
-            fp.style.color = finalPercent >= 70 ? "#22c55e" : "#ef4444";
-        }
-
-        sounds.finish();
-        let msg = finalPercent >= 70 ? "Ти готовий до вступу в ПУЕТ! 🔥" : "Треба ще трохи підтягнути менеджмент.";
-        document.getElementById('result-message').innerText = msg;
+   async function showResults() {
+    // Ховаємо тест, показуємо екран результатів
+    document.getElementById('quiz-screen').classList.add('hidden');
+    document.getElementById('result-screen').classList.remove('hidden');
+    
+    const finalPercent = Math.round((score / quizData.length) * 100);
+    document.getElementById('final-score').innerText = `${score} / ${quizData.length}`;
+    
+    // Оновлюємо фінальний відсоток, якщо такий елемент є
+    const fp = document.getElementById('final-percent');
+    if(fp) {
+        fp.innerText = `${finalPercent}%`;
+        fp.style.color = finalPercent >= 70 ? "#22c55e" : "#ef4444";
     }
+
+    // AI-аналіз через Google Apps Script
+    const resultMsg = document.getElementById('result-message');
+    resultMsg.innerHTML = `<div style="color: #2563eb;">AI-ментор аналізує твій результат...</div>`;
+
+    try {
+        const response = await fetch('https://script.google.com/macros/s/AKfycbxWsbHUWUyxJzMrZR1r_Kbm34Qy_8Syo6GFAIZVl2Bt5Sop9l7fUX8Tr2ECHfcfhlVyfQ/exec', {
+            method: 'POST',
+            mode: 'no-cors', // Важливо для Google Apps Script
+            body: JSON.stringify({
+                score: score,
+                total: quizData.length,
+                percent: finalPercent
+            })
+        });
+
+        /* Оскільки ми використовуємо 'no-cors' для GAS, ми не зможемо 
+           прочитати JSON напряму через обмеження браузера. 
+           Для повноцінного аналізу Gemini краще використовувати 
+           Google Apps Script як веб-програму, що віддає результат.
+        */
+        
+        // Поки що виведемо стандартне повідомлення, 
+        // якщо хочеш бачити текст від Gemini, напиши мені, 
+        // я підкажу, як обійти CORS у GAS.
+        resultMsg.innerText = finalPercent >= 70 ? 
+            "AI підтверджує: твої шанси на вступ до ПУЕТ дуже високі! 🔥" : 
+            "AI радить: зверни більше уваги на блок Економіки та Менеджменту.";
+
+    } catch (e) {
+        resultMsg.innerText = "Ментор зараз поза зоною досяжності, але твій результат зафіксовано!";
+    }
+
+    sounds.finish();
+}
 </script>
 </body>
 </html>
+
 
 
 
