@@ -50,12 +50,16 @@
 
 <script>
     // Звуки (використовуємо стабільні CDN)
-    const sounds = {
-        correct: new Audio('https://cdn.pixabay.com/audio/2021/08/04/audio_bb4a4f1651.mp3'), 
-        wrong: new Audio('https://cdn.pixabay.com/audio/2022/03/10/audio_c976402371.mp3'),
-        finish: new Audio('https://cdn.pixabay.com/audio/2021/08/04/audio_1069ca446d.mp3')
-    };
-
+   const sounds = {
+    // Звук успіху (дзвіночок)
+    correct: new Audio('https://cdn.jsdelivr.net/gh/r-lua/Sound-Effects@master/Success.mp3'), 
+    
+    // Звук помилки (короткий базз)
+    wrong: new Audio('https://cdn.jsdelivr.net/gh/r-lua/Sound-Effects@master/Error.mp3'),
+    
+    // Оплески для фіналу
+    finish: new Audio('https://cdn.jsdelivr.net/gh/r-lua/Sound-Effects@master/Applauses.mp3')
+};
    const quizData = [
     // --- МЕНЕДЖМЕНТ (1-15) ---
     { q: "Яка функція менеджменту є вихідною для всіх інших?", a: ["Організація", "Планування", "Мотивація", "Контроль"], correct: 1 },
@@ -192,3 +196,4 @@
 
 </body>
 </html>
+
