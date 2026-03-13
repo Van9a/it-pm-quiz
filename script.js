@@ -1,4 +1,3 @@
-// ТВІЙ НОВИЙ РОБОЧИЙ URL З БАЗОЮ ДАНИХ
 const GAS_URL = "https://script.google.com/macros/s/AKfycbyNNCCuYNGZLEi_lLyuegE_qtfibsjdJ9Qt-LpozcAW0E8AYF3RiUUerkB_aOiQ9BsjBg/exec";
 
 const subjectsData = {
