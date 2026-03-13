@@ -1,7 +1,5 @@
-// 🔗 Твій бекенд (завжди перевіряй актуальність URL після деплою)
 const GAS_URL = "https://script.google.com/macros/s/AKfycbzCkYy2XVplEL3qgx9HXKSIQKOGZnZSLYN6x512mZ6xHoKFdN24U8AC0YiuoMRm-eu_VA/exec";
 
-// 📚 База тем (можеш доповнювати цей масив)
 const subjectsData = {
     "Математика": ["Числа, вирази та модулі", "Логарифми", "Похідна", "Інтеграл", "Тригонометрія", "Геометрія", "Вектори"],
     "Українська мова": ["Наголоси", "Фонетика", "Морфологія", "Синтаксис", "Пунктуація", "Фразеологія"],
@@ -9,13 +7,12 @@ const subjectsData = {
     "Менеджмент 073": ["4 функції менеджменту", "SWOT-аналіз", "Маркетинг 4P", "Стилі керівництва", "Мотивація"]
 };
 
-// Змінні стану
 let score = 0, currentQ = 1, TOTAL_QUESTIONS = 5;
 let selectedSubject = "", selectedTopic = "";
-let nextQuestionBuffer = null; // "Буфер" для миттєвого відображення
+let nextQuestionBuffer = null;
 
 /**
- * 1. ІНІЦІАЛІЗАЦІЯ
+ * 1. Ініціалізація інтерфейсу
  */
 function init() {
     const subSelect = document.getElementById('subject-select');
@@ -24,14 +21,11 @@ function init() {
 
     subSelect.innerHTML = "";
     for (let sub in subjectsData) {
-        // Заповнюємо випадаючий список
         let opt = document.createElement('option');
         opt.value = sub; opt.innerText = sub;
         subSelect.appendChild(opt);
 
-        // Малюємо картки навчання
         let cat = document.createElement('div');
-        cat.className = 'study-category';
         cat.innerHTML = `<h3 style="color:var(--primary); margin: 25px 0 10px 0;">${sub}</h3>`;
         subjectsData[sub].forEach(topic => {
             let link = document.createElement('div');
@@ -46,7 +40,7 @@ function init() {
 }
 
 /**
- * 2. ОНОВЛЕННЯ ТЕМ ПРИ ЗМІНІ ПРЕДМЕТА
+ * 2. Робота з випадаючими списками
  */
 function updateTopicDropdown() {
     const sub = document.getElementById('subject-select').value;
@@ -60,36 +54,24 @@ function updateTopicDropdown() {
 }
 
 /**
- * 3. ЯДРО ЗАПИТІВ ДО AI (з вимірюванням часу)
+ * 3. Централізований запит до AI
  */
 async function fetchFromAI(payload) {
-    const startTime = performance.now();
-    console.log(`🚀 Запит [${payload.action}] відправлено...`);
-
+    const start = performance.now();
     try {
-        const res = await fetch(GAS_URL, {
-            method: 'POST',
-            body: JSON.stringify(payload)
-        });
+        const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(payload) });
         const data = await res.json();
-        
-        const endTime = performance.now();
-        console.log(`✅ Відповідь [${payload.action}] отримана за ${((endTime - startTime) / 1000).toFixed(2)} сек.`);
-        
+        console.log(`✅ [${payload.action}] за ${((performance.now() - start)/1000).toFixed(2)}с`);
         if (data.error) throw new Error(data.message);
         return data;
     } catch (e) {
-        console.error("🚨 Критична помилка AI:", e);
-        return { 
-            q: "Помилка завантаження (можливо, обірвався JSON). Спробуйте ще раз.", 
-            a: ["Ок", "-", "-", "-"], 
-            correct: 0 
-        };
+        console.error("🚨 AI Error:", e);
+        return null;
     }
 }
 
 /**
- * 4. ТЕСТУВАННЯ (З КЕШУВАННЯМ)
+ * 4. Логіка тестування
  */
 async function startQuiz() {
     selectedSubject = document.getElementById('subject-select').value;
@@ -99,7 +81,6 @@ async function startQuiz() {
     score = 0; currentQ = 1; nextQuestionBuffer = null;
     document.getElementById('start-screen').classList.add('hidden');
     document.getElementById('quiz-screen').classList.remove('hidden');
-    
     renderQuestion(); 
 }
 
@@ -110,8 +91,6 @@ async function renderQuestion() {
     document.getElementById('quiz-progress').innerText = `Питання ${currentQ} з ${TOTAL_QUESTIONS}`;
     
     let data;
-
-    // Перевіряємо буфер
     if (nextQuestionBuffer) {
         data = nextQuestionBuffer;
         nextQuestionBuffer = null;
@@ -123,6 +102,8 @@ async function renderQuestion() {
         loader.classList.add('hidden');
     }
 
+    if (!data) { qText.innerText = "Помилка завантаження. Спробуйте оновити."; return; }
+
     qText.innerText = data.q;
     container.innerHTML = "";
     data.a.forEach((opt, idx) => {
@@ -133,10 +114,9 @@ async function renderQuestion() {
         container.appendChild(btn);
     });
 
-    // Оновлюємо формули
     if (window.MathJax) MathJax.typesetPromise([qText, container]);
 
-    // 🔥 PRE-FETCH: вантажимо НАСТУПНЕ питання у фон, поки юзер думає
+    // PRE-FETCH: вантажимо наступне питання у фон
     if (currentQ < TOTAL_QUESTIONS) {
         fetchFromAI({ action: "generateQuestion", subject: selectedSubject, topic: selectedTopic }).then(res => {
             nextQuestionBuffer = res;
@@ -147,38 +127,28 @@ async function renderQuestion() {
 function handleAnswer(selected, correct, btn) {
     const btns = document.querySelectorAll('.quiz-opt');
     btns.forEach(b => b.disabled = true);
-    
     if (selected === correct) {
         btn.style.background = "#22c55e"; btn.style.color = "white"; score++;
     } else {
         btn.style.background = "#ef4444"; btn.style.color = "white";
         btns[correct].style.background = "#22c55e"; btns[correct].style.color = "white";
     }
-
     setTimeout(() => {
-        if (currentQ < TOTAL_QUESTIONS) {
-            currentQ++;
-            renderQuestion(); // Питання з'явиться миттєво з буфера
-        } else {
-            showResults();
-        }
+        if (currentQ < TOTAL_QUESTIONS) { currentQ++; renderQuestion(); }
+        else { showResults(); }
     }, 1800);
 }
 
 /**
- * 5. НАВЧАННЯ ТА АНАЛІЗ
+ * 5. Навчання та аналіз результатів
  */
 async function learnTopic(sub, topic) {
     showSection('topic-detail');
     const content = document.getElementById('topic-content');
-    content.innerHTML = `<div style="text-align:center; padding:50px;"><p>⌛ Gemini готує лекцію <b>"${topic}"</b>...</p></div>`;
-    
+    content.innerHTML = `<div style="text-align:center; padding:50px;"><p>⌛ Gemini готує лекцію...</p></div>`;
     const data = await fetchFromAI({ action: "getTopicDetails", subject: sub, topic: topic });
     content.innerHTML = `<h2>${topic}</h2>` + formatAIResponse(data.content);
-    
-    if (window.MathJax) {
-        setTimeout(() => { MathJax.typesetPromise([content]); }, 100);
-    }
+    if (window.MathJax) { setTimeout(() => { MathJax.typesetPromise([content]); }, 100); }
 }
 
 async function showResults() {
@@ -186,8 +156,7 @@ async function showResults() {
     document.getElementById('result-screen').classList.remove('hidden');
     document.getElementById('final-score').innerText = score;
     const msg = document.getElementById('result-message');
-    msg.innerText = "⏳ AI-ментор аналізує результат...";
-    
+    msg.innerText = "⏳ AI аналізує твій результат...";
     const data = await fetchFromAI({ action: "analyze", score: score, total: TOTAL_QUESTIONS, subject: selectedSubject });
     msg.innerHTML = formatAIResponse(data.analysis);
 }
@@ -195,19 +164,11 @@ async function showResults() {
 function showSection(id) {
     document.querySelectorAll('.content-section').forEach(s => s.classList.add('hidden'));
     document.getElementById(id + '-section').classList.remove('hidden');
-    if (id !== 'topic-detail') {
-        document.getElementById('btn-test').classList.toggle('active', id === 'test');
-        document.getElementById('btn-study').classList.toggle('active', id === 'study');
-    }
 }
 
 function formatAIResponse(text) {
     if (!text) return "";
-    return text
-        .replace(/### (.*?)\n/g, '<h3>$1</h3>')
-        .replace(/## (.*?)\n/g, '<h2>$1</h2>')
-        .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+    return text.replace(/### (.*?)\n/g, '<h3>$1</h3>').replace(/## (.*?)\n/g, '<h2>$1</h2>').replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
 }
 
-// Подія завантаження
 document.addEventListener('DOMContentLoaded', init);
