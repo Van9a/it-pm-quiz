@@ -1,4 +1,5 @@
-const GAS_URL = "https://script.google.com/macros/s/AKfycbzCkYy2XVplEL3qgx9HXKSIQKOGZnZSLYN6x512mZ6xHoKFdN24U8AC0YiuoMRm-eu_VA/exec";
+// 🔗 Твій новий активований бекенд
+const GAS_URL = "https://script.google.com/macros/s/AKfycbzb1wVXX4gPlkRb4LAddeBG8-9MMt6dFaI4gIHJWRJqqMT2_A8FwH2GLB4YI5civWRqSQ/exec";
 
 const subjectsData = {
     "Математика": ["Логарифми", "Похідна", "Інтеграл", "Тригонометрія", "Вектори", "Геометрія"],
@@ -11,6 +12,9 @@ let score = 0, currentQ = 1, TOTAL_QUESTIONS = 5;
 let selectedSubject = "", selectedTopic = "";
 let nextQuestionBuffer = null;
 
+/**
+ * 1. Запуск та наповнення списків
+ */
 function init() {
     const subSelect = document.getElementById('subject-select');
     const studyContainer = document.getElementById('study-list-container');
@@ -47,20 +51,32 @@ function updateTopicDropdown() {
     });
 }
 
+/**
+ * 2. Ядро запитів (З захистом від "битого" JSON)
+ */
 async function fetchFromAI(payload) {
     const start = performance.now();
     try {
         const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(payload) });
-        const data = await res.json();
-        console.log(`⏱️ [${payload.action}] виконано за ${((performance.now() - start)/1000).toFixed(2)}с`);
+        const rawText = await res.text();
+        
+        // Видаляємо маркдаун-теги, якщо AI їх додав
+        const cleanText = rawText.replace(/```json|```/g, "").trim();
+        
+        const data = JSON.parse(cleanText);
+        console.log(`⏱️ [${payload.action}] за ${((performance.now() - start)/1000).toFixed(2)}с`);
+        
         if (data.error) throw new Error(data.message);
         return data;
     } catch (e) {
-        console.error("🚨 Помилка:", e);
+        console.error("🚨 Помилка обробки запиту:", e);
         return null;
     }
 }
 
+/**
+ * 3. Логіка тестування (Pre-fetching)
+ */
 async function startQuiz() {
     selectedSubject = document.getElementById('subject-select').value;
     const tVal = document.getElementById('topic-select').value;
@@ -90,7 +106,10 @@ async function renderQuestion() {
         loader.classList.add('hidden');
     }
 
-    if (!data) { qText.innerText = "Помилка зв'язку з AI. Спробуйте оновити сторінку."; return; }
+    if (!data) {
+        qText.innerText = "🚨 Помилка зв'язку. Натисніть кнопку 'Назад' та спробуйте іншу тему.";
+        return;
+    }
 
     qText.innerText = data.q;
     container.innerHTML = "";
@@ -104,7 +123,7 @@ async function renderQuestion() {
 
     if (window.MathJax) MathJax.typesetPromise([qText, container]);
 
-    // PRE-FETCH: вантажимо наступне питання, поки юзер читає поточне
+    // PRE-FETCH наступного питання
     if (currentQ < TOTAL_QUESTIONS) {
         fetchFromAI({ action: "generateQuestion", subject: selectedSubject, topic: selectedTopic }).then(res => {
             nextQuestionBuffer = res;
@@ -127,7 +146,9 @@ function handleAnswer(selected, correct, btn) {
     }, 1500);
 }
 
-// ... (learnTopic, showResults, formatAIResponse залишаються як раніше)
+/**
+ * 4. Навчання та Аналіз
+ */
 async function learnTopic(sub, topic) {
     showSection('topic-detail');
     const content = document.getElementById('topic-content');
