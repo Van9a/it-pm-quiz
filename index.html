@@ -3,75 +3,80 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PUET Expert 2026</title>
+    <title>PUET Expert 2026 — Adaptive Trainer</title>
+    
     <script>
-    window.MathJax = {
-        tex: {
-            inlineMath: [['$', '$'], ['\\(', '\\)']],
-            displayMath: [['$$', '$$'], ['\\[', '\\]']],
-            processEscapes: true
-        },
-        options: {
-            skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre']
-        }
-    };
-</script>
-<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+        window.MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$']] },
+            options: { processHtmlClass: 'tex2jax_process' }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
 <nav class="main-menu">
-  <button onclick="showSection('test')" id="btn-test" class="active">📝 Тест</button>
-  <button onclick="showSection('study')" id="btn-study">📚 Навчання</button>
+    <button onclick="showSection('test')" id="btn-test" class="active">📝 Тестування</button>
+    <button onclick="showSection('study')" id="btn-study">📚 План навчання</button>
 </nav>
 
 <div id="test-section" class="content-section">
-    <div class="quiz-container">
+    <div class="card">
         <div id="start-screen">
-            <h1>🎓 IT PM Trainer v3.0</h1>
+            <div class="brand">
+                <span class="emoji">🎓</span>
+                <h1>IT PM Trainer v3.0</h1>
+            </div>
             
-            <label for="subject-select">Обери предмет:</label>
-            <select id="subject-select" onchange="updateTopicDropdown()">
-                </select>
-        
-            <label for="topic-select" style="margin-top: 15px; display: block;">Обери конкретну тему:</label>
-            <select id="topic-select">
-                </select>
-        
-            <button class="main-btn" onclick="startQuiz()" style="margin-top: 25px;">ПОЧАТИ</button>
+            <div class="form-group">
+                <label for="subject-select">Оберіть предмет для підготовки:</label>
+                <select id="subject-select" onchange="updateTopicDropdown()"></select>
+            </div>
+
+            <div class="form-group">
+                <label for="topic-select">Оберіть конкретну тему:</label>
+                <select id="topic-select"></select>
+            </div>
+
+            <button class="main-btn" onclick="startQuiz()">ПОЧАТИ ТЕСТУВАННЯ</button>
         </div>
+
         <div id="quiz-screen" class="hidden">
-            <div id="question-text" class="question"></div>
-            <div id="options-container" class="options"></div>
-            <p id="loading-msg" class="hidden">⌛ Генеруємо...</p>
+            <div class="quiz-header">
+                <span id="quiz-progress">Питання 1 з 5</span>
+                <span id="quiz-timer">⏱️ AI gen</span>
+            </div>
+            <div id="question-text" class="question-box"></div>
+            <div id="options-container" class="options-grid"></div>
+            <div id="loading-msg" class="loader hidden">⏳ Gemini генерує питання...</div>
         </div>
+
         <div id="result-screen" class="hidden">
-            <div class="score-circle" id="final-score">0</div>
-            <div id="result-message">Аналіз...</div>
-            <button class="main-btn" onclick="location.reload()">ЗАНОВО</button>
+            <div class="score-display">
+                <div class="score-circle" id="final-score">0</div>
+                <p>Ваш результат</p>
+            </div>
+            <div id="result-message" class="ai-feedback"></div>
+            <button class="main-btn secondary" onclick="location.reload()">СПРОБУВАТИ ЩЕ РАЗ</button>
         </div>
     </div>
 </div>
 
 <div id="study-section" class="content-section hidden">
-    <div class="study-container">
-        <h2 style="text-align:center; margin-bottom:25px;">🚀 Програма підготовки 2026</h2>
-        
+    <div class="card">
+        <h2 class="section-title">🚀 Програма НМТ & Менеджмент</h2>
         <div id="study-list-container"></div>
     </div>
 </div>
 
 <div id="topic-detail-section" class="content-section hidden">
-    <div class="study-container">
-        <button class="main-btn" onclick="showSection('study')" style="background:#64748b; width:auto; padding:8px 15px; margin-bottom:20px;">⬅ Назад</button>
-        <div id="topic-content"></div>
+    <div class="card">
+        <button class="back-btn" onclick="showSection('study')">← Назад до списку</button>
+        <div id="topic-content" class="tex2jax_process"></div>
     </div>
 </div>
 
 <script src="script.js"></script>
 </body>
 </html>
-
-
-
