@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PUET Expert 2026 — Adaptive Trainer</title>
+    <title>PUET Expert 2026 | Adaptive AI Trainer</title>
     
     <script>
         window.MathJax = {
@@ -30,7 +30,7 @@
             </div>
             
             <div class="form-group">
-                <label for="subject-select">Оберіть предмет для підготовки:</label>
+                <label for="subject-select">Оберіть предмет:</label>
                 <select id="subject-select" onchange="updateTopicDropdown()"></select>
             </div>
 
@@ -45,11 +45,11 @@
         <div id="quiz-screen" class="hidden">
             <div class="quiz-header">
                 <span id="quiz-progress">Питання 1 з 5</span>
-                <span id="quiz-timer">⏱️ AI gen</span>
+                <span class="badge">AI Live Gen</span>
             </div>
-            <div id="question-text" class="question-box"></div>
+            <div id="question-text" class="question-box tex2jax_process"></div>
             <div id="options-container" class="options-grid"></div>
-            <div id="loading-msg" class="loader hidden">⏳ Gemini генерує питання...</div>
+            <div id="loading-msg" class="loader hidden">⌛ Gemini готує складне питання...</div>
         </div>
 
         <div id="result-screen" class="hidden">
@@ -57,7 +57,7 @@
                 <div class="score-circle" id="final-score">0</div>
                 <p>Ваш результат</p>
             </div>
-            <div id="result-message" class="ai-feedback"></div>
+            <div id="result-message" class="ai-feedback tex2jax_process"></div>
             <button class="main-btn secondary" onclick="location.reload()">СПРОБУВАТИ ЩЕ РАЗ</button>
         </div>
     </div>
@@ -65,7 +65,7 @@
 
 <div id="study-section" class="content-section hidden">
     <div class="card">
-        <h2 class="section-title">🚀 Програма НМТ & Менеджмент</h2>
+        <h2 class="section-title">🚀 Програма підготовки 2026</h2>
         <div id="study-list-container"></div>
     </div>
 </div>
