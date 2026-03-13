@@ -1,3 +1,4 @@
+// ВСТАВ СВІЙ НОВИЙ URL ПІСЛЯ ДЕПЛОЮ!
 const GAS_URL = "https://script.google.com/macros/s/AKfycbxIpG_qoVbimsDMIYnUSWOsGa-P-T4wTGnUUOiavMNMSWnXPefWagU4seXiVR6tS2R5Dg/exec";
 
 const subjectsData = {
@@ -9,9 +10,10 @@ const subjectsData = {
 
 let score = 0, currentQ = 1, TOTAL_QUESTIONS = 5;
 let selectedSubject = "", selectedTopic = "";
+let quizQuestions = []; // Масив для зберігання всіх питань тесту
 
 function init() {
-    console.log("🚀 Тренажер v15 (З таймером) активовано!"); 
+    console.log("🚀 Тренажер v16 (Пакетна генерація + Кеш) активовано!"); 
     const subSelect = document.getElementById('subject-select');
     const studyContainer = document.getElementById('study-list-container');
     if (!subSelect) return;
@@ -94,7 +96,6 @@ function handleQuotaCooldown(container, waitTime, retryCallback) {
     const timer = setInterval(() => {
         left--;
         let percent = (left / waitTime) * 100;
-        
         const secEl = document.getElementById('cd-sec');
         const barEl = document.getElementById('cd-bar');
         
@@ -111,53 +112,65 @@ function handleQuotaCooldown(container, waitTime, retryCallback) {
                 btn.style.cursor = "pointer";
                 btn.onclick = retryCallback;
             }
-            if (barEl) barEl.style.width = '0%';
         }
     }, 1000);
 }
 
+// === ЗМІНЕНА ЛОГІКА ТЕСТУВАННЯ ===
 async function startQuiz() {
     selectedSubject = document.getElementById('subject-select').value;
     const tVal = document.getElementById('topic-select').value;
     selectedTopic = (tVal === "random") ? subjectsData[selectedSubject][Math.floor(Math.random()*subjectsData[selectedSubject].length)] : tVal;
     
-    score = 0; currentQ = 1;
+    score = 0; currentQ = 1; quizQuestions = [];
     document.getElementById('start-screen').classList.add('hidden');
     document.getElementById('quiz-screen').classList.remove('hidden');
-    renderQuestion(); 
-}
-
-async function renderQuestion() {
+    
     const qText = document.getElementById('question-text');
     const container = document.getElementById('options-container');
     const loader = document.getElementById('loading-msg');
     
-    document.getElementById('quiz-progress').innerText = `Питання ${currentQ} з ${TOTAL_QUESTIONS}`;
-    qText.innerText = "";
-    loader.classList.remove('hidden');
+    qText.innerText = "Формуємо пакет питань...";
     container.innerHTML = "";
-    
-    const data = await fetchFromAI({ action: "generateQuestion", subject: selectedSubject, topic: selectedTopic });
+    loader.classList.remove('hidden');
+
+    // 1 ЗАПИТ ОДРАЗУ НА 5 ПИТАНЬ
+    const data = await fetchFromAI({ action: "generateQuiz", amount: TOTAL_QUESTIONS, subject: selectedSubject, topic: selectedTopic });
     loader.classList.add('hidden');
 
     if (data && data.isQuota) {
         qText.innerText = "Упс, перевищено ліміт запитів.";
-        handleQuotaCooldown(container, data.waitTime, renderQuestion);
+        handleQuotaCooldown(container, data.waitTime, startQuiz);
         return;
     }
 
-    if (!data || data.error) {
-        qText.innerText = "⚠️ Помилка завантаження.";
-        container.innerHTML = `<button class="quiz-opt" onclick="renderQuestion()">🔄 Спробувати ще раз</button>`;
+    if (!data || data.error || !Array.isArray(data)) {
+        qText.innerText = "⚠️ Помилка генерації тесту.";
+        container.innerHTML = `<button class="quiz-opt" onclick="startQuiz()">🔄 Спробувати ще раз</button>`;
         return;
     }
 
-    qText.innerText = data.q;
-    data.a.forEach((opt, idx) => {
+    // Зберігаємо масив питань і починаємо рендеринг
+    quizQuestions = data;
+    renderQuestion(); 
+}
+
+function renderQuestion() {
+    const qText = document.getElementById('question-text');
+    const container = document.getElementById('options-container');
+    
+    document.getElementById('quiz-progress').innerText = `Питання ${currentQ} з ${TOTAL_QUESTIONS}`;
+    
+    // Беремо питання з локальної пам'яті (БЕЗ ЗАПИТІВ ДО AI!)
+    const currentData = quizQuestions[currentQ - 1];
+    
+    qText.innerText = currentData.q;
+    container.innerHTML = "";
+    currentData.a.forEach((opt, idx) => {
         const btn = document.createElement('button');
         btn.className = 'quiz-opt';
         btn.innerText = opt;
-        btn.onclick = () => handleAnswer(idx, data.correct, btn);
+        btn.onclick = () => handleAnswer(idx, currentData.correct, btn);
         container.appendChild(btn);
     });
 }
@@ -172,14 +185,29 @@ function handleAnswer(selected, correct, btn) {
         btns[correct].style.background = "#22c55e";
     }
     setTimeout(() => {
-        if (currentQ < TOTAL_QUESTIONS) { currentQ++; renderQuestion(); }
-        else { showResults(); }
+        if (currentQ < TOTAL_QUESTIONS) { 
+            currentQ++; 
+            renderQuestion(); 
+        } else { 
+            showResults(); 
+        }
     }, 1500);
 }
 
+// === ЗМІНЕНА ЛОГІКА ЛЕКЦІЙ (КЕШУВАННЯ) ===
 async function learnTopic(sub, topic) {
     showSection('topic-detail');
     const content = document.getElementById('topic-content');
+    
+    // Перевіряємо, чи є лекція в кеші
+    const cacheKey = `lecture_${sub}_${topic}`;
+    const cachedData = localStorage.getItem(cacheKey);
+    
+    if (cachedData) {
+        content.innerHTML = `<h2>${topic}</h2>${cachedData.replace(/\n/g, '<br>')}`;
+        return; // Виходимо, запит до AI не потрібен!
+    }
+
     content.innerHTML = "<p>⌛ Завантаження матеріалу...</p>";
     
     const data = await fetchFromAI({ action: "getTopicDetails", subject: sub, topic: topic });
@@ -189,6 +217,8 @@ async function learnTopic(sub, topic) {
     } else if (data && data.error) {
         content.innerHTML = `<h2>${topic}</h2><p style="color:red;">Помилка: ${data.message}</p><button onclick="learnTopic('${sub}', '${topic}')">🔄 Повторити</button>`;
     } else {
+        // Зберігаємо успішну відповідь у кеш браузера
+        localStorage.setItem(cacheKey, data.content);
         content.innerHTML = `<h2>${topic}</h2>${data.content.replace(/\n/g, '<br>')}`;
     }
 }
