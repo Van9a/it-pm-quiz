@@ -1,174 +1,79 @@
-const GAS_URL = "https://script.google.com/macros/s/AKfycbzCkYy2XVplEL3qgx9HXKSIQKOGZnZSLYN6x512mZ6xHoKFdN24U8AC0YiuoMRm-eu_VA/exec";
-
-const subjectsData = {
-    "Математика": ["Числа, вирази та модулі", "Логарифми", "Похідна", "Інтеграл", "Тригонометрія", "Геометрія", "Вектори"],
-    "Українська мова": ["Наголоси", "Фонетика", "Морфологія", "Синтаксис", "Пунктуація", "Фразеологія"],
-    "Історія України": ["Козаччина", "XIX століття", "Революція 1917-21", "Друга світова", "Сучасність"],
-    "Менеджмент 073": ["4 функції менеджменту", "SWOT-аналіз", "Маркетинг 4P", "Стилі керівництва", "Мотивація"]
-};
-
-let score = 0, currentQ = 1, TOTAL_QUESTIONS = 5;
-let selectedSubject = "", selectedTopic = "";
-let nextQuestionBuffer = null;
-
 /**
- * 1. Ініціалізація інтерфейсу
+ * PUET AI EXPERT BACKEND v7.5 (Verified 2026 Models)
  */
-function init() {
-    const subSelect = document.getElementById('subject-select');
-    const studyContainer = document.getElementById('study-list-container');
-    if (!subSelect || !studyContainer) return;
 
-    subSelect.innerHTML = "";
-    for (let sub in subjectsData) {
-        let opt = document.createElement('option');
-        opt.value = sub; opt.innerText = sub;
-        subSelect.appendChild(opt);
+const API_KEY = PropertiesService.getScriptProperties().getProperty('GEMINI_KEY');
 
-        let cat = document.createElement('div');
-        cat.innerHTML = `<h3 style="color:var(--primary); margin: 25px 0 10px 0;">${sub}</h3>`;
-        subjectsData[sub].forEach(topic => {
-            let link = document.createElement('div');
-            link.className = 'topic-link';
-            link.innerText = `📖 ${topic}`;
-            link.onclick = () => learnTopic(sub, topic);
-            cat.appendChild(link);
-        });
-        studyContainer.appendChild(cat);
-    }
-    updateTopicDropdown();
-}
+// Список моделей ПРЯМО з твого діагностичного звіту
+const MODELS_TO_TRY = [
+  "gemini-2.5-flash", 
+  "gemini-2.0-flash",
+  "gemini-1.5-flash"
+];
 
-/**
- * 2. Робота з випадаючими списками
- */
-function updateTopicDropdown() {
-    const sub = document.getElementById('subject-select').value;
-    const topicSelect = document.getElementById('topic-select');
-    topicSelect.innerHTML = '<option value="random">🎲 Випадкова тема</option>';
-    subjectsData[sub].forEach(t => {
-        let opt = document.createElement('option');
-        opt.value = t; opt.innerText = t;
-        topicSelect.appendChild(opt);
-    });
-}
+function doPost(e) {
+  try {
+    if (!API_KEY) throw new Error("API_KEY не налаштовано!");
 
-/**
- * 3. Централізований запит до AI
- */
-async function fetchFromAI(payload) {
-    const start = performance.now();
-    try {
-        const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(payload) });
-        const data = await res.json();
-        console.log(`✅ [${payload.action}] за ${((performance.now() - start)/1000).toFixed(2)}с`);
-        if (data.error) throw new Error(data.message);
-        return data;
-    } catch (e) {
-        console.error("🚨 AI Error:", e);
-        return null;
-    }
-}
-
-/**
- * 4. Логіка тестування
- */
-async function startQuiz() {
-    selectedSubject = document.getElementById('subject-select').value;
-    const tVal = document.getElementById('topic-select').value;
-    selectedTopic = (tVal === "random") ? subjectsData[selectedSubject][Math.floor(Math.random()*subjectsData[selectedSubject].length)] : tVal;
-
-    score = 0; currentQ = 1; nextQuestionBuffer = null;
-    document.getElementById('start-screen').classList.add('hidden');
-    document.getElementById('quiz-screen').classList.remove('hidden');
-    renderQuestion(); 
-}
-
-async function renderQuestion() {
-    const qText = document.getElementById('question-text');
-    const container = document.getElementById('options-container');
-    const loader = document.getElementById('loading-msg');
-    document.getElementById('quiz-progress').innerText = `Питання ${currentQ} з ${TOTAL_QUESTIONS}`;
+    const data = JSON.parse(e.postData.contents);
+    const promptText = generatePrompt(data);
     
-    let data;
-    if (nextQuestionBuffer) {
-        data = nextQuestionBuffer;
-        nextQuestionBuffer = null;
-        loader.classList.add('hidden');
-    } else {
-        qText.innerText = "";
-        loader.classList.remove('hidden');
-        data = await fetchFromAI({ action: "generateQuestion", subject: selectedSubject, topic: selectedTopic });
-        loader.classList.add('hidden');
+    let aiResponse = null;
+    let usedModel = "";
+
+    // Цикл перебору моделей для 100% стабільності
+    for (let modelName of MODELS_TO_TRY) {
+      try {
+        aiResponse = callGeminiAPI(modelName, promptText);
+        if (aiResponse) {
+          usedModel = modelName;
+          break; 
+        }
+      } catch (err) {
+        console.warn(`Модель ${modelName} недоступна, пробую наступну...`);
+        continue; 
+      }
     }
 
-    if (!data) { qText.innerText = "Помилка завантаження. Спробуйте оновити."; return; }
+    if (!aiResponse) throw new Error("Сервери Google тимчасово перевантажені.");
 
-    qText.innerText = data.q;
-    container.innerHTML = "";
-    data.a.forEach((opt, idx) => {
-        const btn = document.createElement('button');
-        btn.className = 'quiz-opt';
-        btn.innerText = opt;
-        btn.onclick = () => handleAnswer(idx, data.correct, btn);
-        container.appendChild(btn);
-    });
+    const finalOutput = processAIResponse(aiResponse, data.action);
+    return ContentService.createTextOutput(finalOutput).setMimeType(ContentService.MimeType.JSON);
 
-    if (window.MathJax) MathJax.typesetPromise([qText, container]);
-
-    // PRE-FETCH: вантажимо наступне питання у фон
-    if (currentQ < TOTAL_QUESTIONS) {
-        fetchFromAI({ action: "generateQuestion", subject: selectedSubject, topic: selectedTopic }).then(res => {
-            nextQuestionBuffer = res;
-        });
-    }
+  } catch (err) {
+    return ContentService.createTextOutput(JSON.stringify({ 
+      error: true, 
+      message: err.message 
+    })).setMimeType(ContentService.MimeType.JSON);
+  }
 }
 
-function handleAnswer(selected, correct, btn) {
-    const btns = document.querySelectorAll('.quiz-opt');
-    btns.forEach(b => b.disabled = true);
-    if (selected === correct) {
-        btn.style.background = "#22c55e"; btn.style.color = "white"; score++;
-    } else {
-        btn.style.background = "#ef4444"; btn.style.color = "white";
-        btns[correct].style.background = "#22c55e"; btns[correct].style.color = "white";
-    }
-    setTimeout(() => {
-        if (currentQ < TOTAL_QUESTIONS) { currentQ++; renderQuestion(); }
-        else { showResults(); }
-    }, 1800);
+function callGeminiAPI(modelName, prompt) {
+  const url = `https://generativelanguage.googleapis.com/v1/models/${modelName}:generateContent?key=${API_KEY}`;
+  
+  const payload = {
+    contents: [{ parts: [{ text: prompt }] }],
+    generationConfig: { maxOutputTokens: 1200, temperature: 0.7 }
+  };
+
+  const response = UrlFetchApp.fetch(url, {
+    method: "post",
+    contentType: "application/json",
+    payload: JSON.stringify(payload),
+    muteHttpExceptions: true
+  });
+
+  const resData = JSON.parse(response.getContentText());
+  if (resData.error) throw new Error(resData.error.message);
+  
+  return resData.candidates[0].content.parts[0].text;
 }
 
-/**
- * 5. Навчання та аналіз результатів
- */
-async function learnTopic(sub, topic) {
-    showSection('topic-detail');
-    const content = document.getElementById('topic-content');
-    content.innerHTML = `<div style="text-align:center; padding:50px;"><p>⌛ Gemini готує лекцію...</p></div>`;
-    const data = await fetchFromAI({ action: "getTopicDetails", subject: sub, topic: topic });
-    content.innerHTML = `<h2>${topic}</h2>` + formatAIResponse(data.content);
-    if (window.MathJax) { setTimeout(() => { MathJax.typesetPromise([content]); }, 100); }
-}
-
-async function showResults() {
-    document.getElementById('quiz-screen').classList.add('hidden');
-    document.getElementById('result-screen').classList.remove('hidden');
-    document.getElementById('final-score').innerText = score;
-    const msg = document.getElementById('result-message');
-    msg.innerText = "⏳ AI аналізує твій результат...";
-    const data = await fetchFromAI({ action: "analyze", score: score, total: TOTAL_QUESTIONS, subject: selectedSubject });
-    msg.innerHTML = formatAIResponse(data.analysis);
-}
-
-function showSection(id) {
-    document.querySelectorAll('.content-section').forEach(s => s.classList.add('hidden'));
-    document.getElementById(id + '-section').classList.remove('hidden');
-}
-
-function formatAIResponse(text) {
-    if (!text) return "";
-    return text.replace(/### (.*?)\n/g, '<h3>$1</h3>').replace(/## (.*?)\n/g, '<h2>$1</h2>').replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
-}
-
-document.addEventListener('DOMContentLoaded', init);
+function generatePrompt(data) {
+  if (data.action === "generateQuestion") {
+    return `Ти - експерт НМТ та менеджменту. Створи 1 складне питання по темі "${data.topic}" (${data.subject}). 
+    JSON формат ТІЛЬКИ: {"q": "текст", "a": ["в1", "в2", "в3", "в4"], "correct": 0}. 
+    Використовуй LaTeX для складних формул. Всередині тексту використовуй одинарні лапки.`;
+  } 
+  if (data.action === "getTopicDetails") {
+    return `Напиши структурований конспект для підготовки до НМТ: "${data.topic}" (${data.subject}). Використовуй Markdown, LaTeX та додавай практичні приклади для
