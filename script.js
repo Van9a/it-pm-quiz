@@ -75,7 +75,7 @@ function init() {
 async function learnTopic(sub, topic) {
     showSection('topic-detail');
     const content = document.getElementById('topic-content');
-    content.innerHTML = `<div style="text-align:center; padding:50px;"><p>⌛ Gemini готує лекцію по темі <b>"${topic}"</b>...</p></div>`;
+    content.innerHTML = `<p style="text-align:center">⌛ Gemini готує лекцію...</p>`;
 
     try {
         const res = await fetch(GAS_URL, {
@@ -83,11 +83,17 @@ async function learnTopic(sub, topic) {
             body: JSON.stringify({ action: "getTopicDetails", subject: sub, topic: topic })
         });
         const data = await res.json();
+        
+        // Вставляємо текст
         content.innerHTML = formatAIResponse(data.content);
         
-        // Рендеримо формули MathJax
-        if (window.MathJax) MathJax.typesetPromise([content]);
-    } catch (e) { content.innerHTML = "❌ Помилка завантаження. Спробуй ще раз."; }
+        // Запускаємо перетворення формул
+        if (window.MathJax) {
+            setTimeout(() => {
+                MathJax.typesetPromise([content]).catch((err) => console.log(err));
+            }, 100); 
+        }
+    } catch (e) { content.innerHTML = "❌ Помилка завантаження."; }
 }
 
 // 3. Логіка тестування
