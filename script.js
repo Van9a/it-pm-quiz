@@ -1,79 +1,127 @@
-/**
- * PUET AI EXPERT BACKEND v18.0 - FULL DATABASE (Quizzes + Lectures)
- */
+const GAS_URL = "https://script.google.com/macros/s/AKfycbyNNCCuYNGZLEi_lLyuegE_qtfibsjdJ9Qt-LpozcAW0E8AYF3RiUUerkB_aOiQ9BsjBg/exec";
 
-const API_KEY = PropertiesService.getScriptProperties().getProperty('GEMINI_KEY');
-const SHEET_ID = '1V9bSkb-aBpZWTQuj5tWV-ZwPAaHdeneC8iWP6VWta-c';
+const subjectsData = {
+    "Менеджмент 073": ["4 функції менеджменту", "SWOT-аналіз", "Маркетинг 4P", "Стилі керівництва", "Мотивація"],
+    "Математика": ["Похідна", "Інтеграл", "Логарифми", "Тригонометрія", "Вектори", "Геометрія"],
+    "Українська мова": ["Наголоси", "Морфологія", "Синтаксис", "Пунктуація", "Фразеологія"],
+    "Історія України": ["Козаччина", "Революція 1917-21", "Друга світова війна", "Сучасна Україна"]
+};
 
-function doPost(e) {
-  try {
-    if (!API_KEY) throw new Error("API ключ не знайдено!");
+let score = 0, currentQ = 1, TOTAL_QUESTIONS = 5, quizQuestions = [], selectedSubject = "", selectedTopic = "";
 
-    const data = JSON.parse(e.postData.contents);
-
-    if (data.action === "generateQuiz") {
-      return handleDatabaseQuiz(data);
-    } else if (data.action === "getTopicDetails") {
-      return handleDatabaseLecture(data); // Підключили лекції до бази!
-    } else {
-      return handleDirectAI(data); // Аналіз залишаємо напряму
+function init() {
+    console.log("🚀 Тренажер v18 (Full DB) активовано!");
+    const subSelect = document.getElementById('subject-select');
+    if (!subSelect) return;
+    subSelect.innerHTML = "";
+    for (let sub in subjectsData) {
+        let opt = document.createElement('option');
+        opt.value = sub; opt.innerText = sub;
+        subSelect.appendChild(opt);
     }
-  } catch (err) {
-    return ContentService.createTextOutput(JSON.stringify({ error: true, message: err.message }))
-                         .setMimeType(ContentService.MimeType.JSON);
-  }
+    subSelect.onchange = updateTopicDropdown;
+    updateTopicDropdown();
 }
 
-// === ЛОГІКА РОБОТИ З БАЗОЮ ПИТАНЬ ===
-function handleDatabaseQuiz(data) {
-  const spreadsheet = SpreadsheetApp.openById(SHEET_ID);
-  let sheet = spreadsheet.getSheets()[0]; // Перша вкладка (для тестів)
-  const rows = sheet.getDataRange().getValues();
-  
-  let savedQuestions = [];
-  
-  for (let i = 1; i < rows.length; i++) { 
-    if (rows[i][0] === data.subject && rows[i][1] === data.topic && rows[i][2]) {
-      try {
-        savedQuestions.push(JSON.parse(rows[i][2]));
-      } catch(e) {} 
-    }
-  }
-
-  if (savedQuestions.length >= 5) {
-    const shuffled = savedQuestions.sort(() => 0.5 - Math.random()).slice(0, 5);
-    return ContentService.createTextOutput(JSON.stringify(shuffled))
-                         .setMimeType(ContentService.MimeType.JSON);
-  }
-
-  const prompt = `Створи 10 тестових питань у форматі НМТ на тему "${data.topic}" (${data.subject}) українською мовою. 
-  Відповідь має бути СУВОРО у форматі JSON-масиву: [{"q":"текст","a":["в1","в2","в3","в4"],"correct":0}]. 
-  КРИТИЧНО ВАЖЛИВО: Не використовуй лапки (") всередині тексту питань чи відповідей, замінюй їх на одинарні (') або ялинки («»). Тільки чистий JSON-масив без markdown-розмітки.`;
-
-  const aiText = callGeminiAPI(prompt, 0.2);
-  
-  const s = aiText.indexOf('[');
-  const e = aiText.lastIndexOf(']');
-  if (s === -1 || e === -1) throw new Error("AI не зміг згенерувати правильний масив питань.");
-
-  const jsonString = aiText.substring(s, e + 1);
-  const newQuestions = JSON.parse(jsonString);
-
-  newQuestions.forEach(q => {
-    sheet.appendRow([data.subject, data.topic, JSON.stringify(q)]);
-  });
-
-  const resultToUser = newQuestions.slice(0, 5);
-  return ContentService.createTextOutput(JSON.stringify(resultToUser))
-                       .setMimeType(ContentService.MimeType.JSON);
+function updateTopicDropdown() {
+    const sub = document.getElementById('subject-select').value;
+    const topicSelect = document.getElementById('topic-select');
+    if (!topicSelect) return;
+    topicSelect.innerHTML = '<option value="random">🎲 Випадкова тема</option>';
+    subjectsData[sub].forEach(t => {
+        let opt = document.createElement('option');
+        opt.value = t; opt.innerText = t;
+        topicSelect.appendChild(opt);
+    });
 }
 
-// === НОВА ЛОГІКА РОБОТИ З БАЗОЮ ЛЕКЦІЙ ===
-function handleDatabaseLecture(data) {
-  const spreadsheet = SpreadsheetApp.openById(SHEET_ID);
-  let sheet = spreadsheet.getSheetByName("Lectures");
-  
-  // МАГІЯ: Якщо вкладки "Lectures" ще немає — скрипт створить її сам!
-  if (!sheet) {
-    sheet = spreadsheet.insertSheet("Lectures");
-    sheet.appendRow(["Предмет", "Тема
+async function fetchFromAI(payload) {
+    try {
+        const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(payload) });
+        const data = await res.json();
+        if (data.error && data.message.includes("Quota")) {
+            let wait = 60;
+            const m = data.message.match(/retry in (\d+)/);
+            if (m) wait = Math.ceil(parseInt(m[1]));
+            return { isQuota: true, waitTime: wait };
+        }
+        return data;
+    } catch (e) { return { error: true, message: e.message }; }
+}
+
+async function startQuiz() {
+    selectedSubject = document.getElementById('subject-select').value;
+    const tVal = document.getElementById('topic-select').value;
+    selectedTopic = tVal === "random" ? subjectsData[selectedSubject][Math.floor(Math.random()*subjectsData[selectedSubject].length)] : tVal;
+    score = 0; currentQ = 1;
+    document.getElementById('start-screen').classList.add('hidden');
+    document.getElementById('quiz-screen').classList.remove('hidden');
+    loadQuestions();
+}
+
+async function loadQuestions() {
+    const qText = document.getElementById('question-text');
+    const container = document.getElementById('options-container');
+    qText.innerText = "🔍 Завантаження питань з бази...";
+    container.innerHTML = "";
+    const data = await fetchFromAI({ action: "generateQuiz", subject: selectedSubject, topic: selectedTopic });
+    if (data.isQuota) return handleQuota(container, data.waitTime, loadQuestions);
+    quizQuestions = data;
+    renderQuestion();
+}
+
+function renderQuestion() {
+    const qText = document.getElementById('question-text');
+    const container = document.getElementById('options-container');
+    const currentData = quizQuestions[currentQ - 1];
+    document.getElementById('quiz-progress').innerText = `Питання ${currentQ} з ${TOTAL_QUESTIONS}`;
+    qText.innerText = currentData.q;
+    container.innerHTML = "";
+    currentData.a.forEach((opt, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'quiz-opt'; btn.innerText = opt;
+        btn.onclick = () => {
+            const btns = document.querySelectorAll('.quiz-opt');
+            btns.forEach(b => b.disabled = true);
+            if (idx === currentData.correct) { btn.style.background = "#22c55e"; score++; }
+            else { btn.style.background = "#ef4444"; btns[currentData.correct].style.background = "#22c55e"; }
+            setTimeout(() => { if (currentQ < TOTAL_QUESTIONS) { currentQ++; renderQuestion(); } else showResults(); }, 1500);
+        };
+        container.appendChild(btn);
+    });
+}
+
+async function learnTopic(sub, topic) {
+    showSection('topic-detail');
+    const content = document.getElementById('topic-content');
+    content.innerHTML = "<p>⌛ Завантаження лекції...</p>";
+    const data = await fetchFromAI({ action: "getTopicDetails", subject: sub, topic: topic });
+    if (data.isQuota) return handleQuota(content, data.waitTime, () => learnTopic(sub, topic));
+    content.innerHTML = `<h2>${topic}</h2>${data.content.replace(/\n/g, '<br>')}`;
+}
+
+function handleQuota(container, time, retry) {
+    container.innerHTML = `<div style="text-align:center;"><p>⏳ AI перевантажений. Зачекай ${time} сек...</p><div style="width:100%;background:#eee;height:10px;border-radius:5px;"><div id="pbar" style="width:100%;background:#ef4444;height:100%;transition:1s linear;"></div></div></div>`;
+    let left = time;
+    const int = setInterval(() => {
+        left--; document.getElementById('pbar').style.width = (left/time)*100 + '%';
+        if (left <= 0) { clearInterval(int); retry(); }
+    }, 1000);
+}
+
+async function showResults() {
+    document.getElementById('quiz-screen').classList.add('hidden');
+    document.getElementById('result-screen').classList.remove('hidden');
+    document.getElementById('final-score').innerText = score;
+    const msg = document.getElementById('result-message');
+    msg.innerText = "⏳ Отримання аналізу...";
+    const data = await fetchFromAI({ action: "analyze", score: score, total: TOTAL_QUESTIONS });
+    msg.innerHTML = data.analysis ? data.analysis.replace(/\n/g, '<br>') : "Тест завершено!";
+}
+
+function showSection(id) {
+    document.querySelectorAll('.content-section').forEach(s => s.classList.add('hidden'));
+    document.getElementById(id + '-section').classList.remove('hidden');
+}
+
+document.addEventListener('DOMContentLoaded', init);
