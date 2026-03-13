@@ -39,16 +39,25 @@ function init() {
     updateTopicDropdown();
 }
 
-function updateTopicDropdown() {
-    const sub = document.getElementById('subject-select').value;
-    const topicSelect = document.getElementById('topic-select');
-    if (!topicSelect) return;
-    topicSelect.innerHTML = '<option value="random">🎲 Випадкова тема</option>';
-    subjectsData[sub].forEach(t => {
-        let opt = document.createElement('option');
-        opt.value = t; opt.innerText = t;
-        topicSelect.appendChild(opt);
-    });
+async function fetchFromAI(payload) {
+    try {
+        const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(payload) });
+        console.log("📡 Статус сервера:", res.status); // Має бути 200
+        
+        const text = await res.text();
+        console.log("📥 Сирий текст відповіді:", text); 
+        
+        if (!text || text.trim() === "") {
+            throw new Error("Сервер нічого не відповів (Empty Response)");
+        }
+
+        const data = JSON.parse(text.replace(/```json|```/g, "").trim());
+        if (data.error) throw new Error(data.message);
+        return data;
+    } catch (e) {
+        console.error("🚨 Помилка:", e.message);
+        return { error: true, message: e.message };
+    }
 }
 
 async function fetchFromAI(payload) {
