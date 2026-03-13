@@ -177,3 +177,42 @@ async function learnTopic(sub, topic) {
     
     // Форматуємо Markdown жирний текст (**)
     let formattedContent = data.content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    
+    content.innerHTML = `<h2>${topic}</h2><div style="line-height:1.6; font-size: 16px;">${formattedContent.replace(/\n/g, '<br>')}</div>`;
+}
+
+function handleQuota(container, time, retry) {
+    container.innerHTML = `
+        <div style="text-align:center; padding: 20px;">
+            <p>⏳ AI перевантажений. Авто-повтор через <span id="timer-sec">${time}</span> сек...</p>
+            <div style="width:100%; background:#eee; height:10px; border-radius:5px; margin-top: 10px;">
+                <div id="pbar" style="width:100%; background:#3b82f6; height:100%; transition:1s linear; border-radius:5px;"></div>
+            </div>
+        </div>`;
+    let left = time;
+    const int = setInterval(() => {
+        left--;
+        const pbar = document.getElementById('pbar');
+        const timer = document.getElementById('timer-sec');
+        if (pbar) pbar.style.width = (left / time) * 100 + '%';
+        if (timer) timer.innerText = left;
+        if (left <= 0) { clearInterval(int); retry(); }
+    }, 1000);
+}
+
+async function showResults() {
+    document.getElementById('quiz-screen').classList.add('hidden');
+    document.getElementById('result-screen').classList.remove('hidden');
+    document.getElementById('final-score').innerText = score;
+    const msg = document.getElementById('result-message');
+    msg.innerText = "⏳ Отримання аналізу...";
+    const data = await fetchFromAI({ action: "analyze", score: score, total: TOTAL_QUESTIONS });
+    msg.innerHTML = data.analysis ? data.analysis.replace(/\n/g, '<br>') : "Аналіз завершено.";
+}
+
+function showSection(id) {
+    document.querySelectorAll('.content-section').forEach(s => s.classList.add('hidden'));
+    document.getElementById(id + '-section').classList.remove('hidden');
+}
+
+document.addEventListener('DOMContentLoaded', init);
