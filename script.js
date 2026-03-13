@@ -9,7 +9,6 @@ const subjectsData = {
 
 let score = 0, currentQ = 1, TOTAL_QUESTIONS = 5;
 let selectedSubject = "", selectedTopic = "";
-let nextQuestionBuffer = null; 
 
 function init() {
     console.log("🚀 СКРИПТ ПРАЦЮЄ!");
@@ -36,27 +35,24 @@ function init() {
             studyContainer.appendChild(cat);
         }
     }
+    // Додаємо слухач подій, щоб теми змінювалися при виборі предмета
+    subSelect.onchange = updateTopicDropdown;
     updateTopicDropdown();
 }
 
-async function fetchFromAI(payload) {
-    try {
-        const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(payload) });
-        console.log("📡 Статус сервера:", res.status); // Має бути 200
-        
-        const text = await res.text();
-        console.log("📥 Сирий текст відповіді:", text); 
-        
-        if (!text || text.trim() === "") {
-            throw new Error("Сервер нічого не відповів (Empty Response)");
-        }
-
-        const data = JSON.parse(text.replace(/```json|```/g, "").trim());
-        if (data.error) throw new Error(data.message);
-        return data;
-    } catch (e) {
-        console.error("🚨 Помилка:", e.message);
-        return { error: true, message: e.message };
+// ОСЬ ЦЯ ФУНКЦІЯ, ЯКОЇ НЕ ВИСТАЧАЛО:
+function updateTopicDropdown() {
+    const sub = document.getElementById('subject-select').value;
+    const topicSelect = document.getElementById('topic-select');
+    if (!topicSelect) return;
+    
+    topicSelect.innerHTML = '<option value="random">🎲 Випадкова тема</option>';
+    if (subjectsData[sub]) {
+        subjectsData[sub].forEach(t => {
+            let opt = document.createElement('option');
+            opt.value = t; opt.innerText = t;
+            topicSelect.appendChild(opt);
+        });
     }
 }
 
@@ -66,16 +62,20 @@ async function fetchFromAI(payload) {
         const text = await res.text();
         console.log("📥 Відповідь сервера:", text);
         const data = JSON.parse(text.replace(/```json|```/g, "").trim());
+        if (data.error) throw new Error(data.message);
         return data;
     } catch (e) {
         console.error("🚨 Помилка:", e.message);
-        return { error: true };
+        return { error: true, message: e.message };
     }
 }
 
 async function startQuiz() {
-    selectedSubject = document.getElementById('subject-select').value;
-    const tVal = document.getElementById('topic-select').value;
+    const subSelect = document.getElementById('subject-select');
+    const topicSelect = document.getElementById('topic-select');
+    
+    selectedSubject = subSelect.value;
+    const tVal = topicSelect.value;
     selectedTopic = (tVal === "random") ? subjectsData[selectedSubject][Math.floor(Math.random()*subjectsData[selectedSubject].length)] : tVal;
     
     score = 0; currentQ = 1;
@@ -90,14 +90,14 @@ async function renderQuestion() {
     const loader = document.getElementById('loading-msg');
     
     document.getElementById('quiz-progress').innerText = `Питання ${currentQ} з ${TOTAL_QUESTIONS}`;
-    
     qText.innerText = "";
     loader.classList.remove('hidden');
+    
     const data = await fetchFromAI({ action: "generateQuestion", subject: selectedSubject, topic: selectedTopic });
     loader.classList.add('hidden');
 
     if (!data || data.error) {
-        qText.innerText = "⚠️ Помилка завантаження. Спробуй ще раз.";
+        qText.innerText = "⚠️ " + (data?.message || "Помилка завантаження.");
         return;
     }
 
@@ -138,13 +138,16 @@ async function showResults() {
     document.getElementById('quiz-screen').classList.add('hidden');
     document.getElementById('result-screen').classList.remove('hidden');
     document.getElementById('final-score').innerText = score;
+    const msg = document.getElementById('result-message');
+    msg.innerText = "⏳ AI аналізує...";
     const data = await fetchFromAI({ action: "analyze", score: score, total: TOTAL_QUESTIONS, subject: selectedSubject });
-    document.getElementById('result-message').innerHTML = data.analysis || "Тест завершено!";
+    msg.innerHTML = data && data.analysis ? data.analysis.replace(/\n/g, '<br>') : "Тест завершено!";
 }
 
 function showSection(id) {
     document.querySelectorAll('.content-section').forEach(s => s.classList.add('hidden'));
-    document.getElementById(id + '-section').classList.remove('hidden');
+    const target = document.getElementById(id + '-section');
+    if (target) target.classList.remove('hidden');
 }
 
 document.addEventListener('DOMContentLoaded', init);
