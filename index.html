@@ -22,10 +22,71 @@
         .ai-btn { background: var(--ai-color) !important; margin-top: 15px; font-size: 0.9rem !important; }
         .score-circle { font-size: 3.5rem; font-weight: 800; color: var(--primary); margin: 20px 0; }
         #result-message { font-style: italic; color: #475569; line-height: 1.5; background: #f1f5f9; padding: 15px; border-radius: 8px; }
+        .main-menu {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .main-menu button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            background: #eee;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
+        .main-menu button.active {
+            background: #6c5ce7;
+            color: white;
+        }
+
+        .study-category {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            text-align: left;
+            border-left: 4px solid #6c5ce7;
+        }
     </style>
 </head>
 <body>
 
+<nav class="main-menu">
+  <button onclick="showSection('test')" id="btn-test" class="active">📝 Тестування</button>
+  <button onclick="showSection('study')" id="btn-study">📚 План навчання 2026</button>
+</nav>
+
+<div id="test-section" class="content-section">
+  </div>
+
+<div id="study-section" class="content-section" style="display:none;">
+  <h2>📌 План підготовки до НМТ та вступу на Менеджмент</h2>
+  
+  <div class="study-category">
+    <h3>📖 Блок НМТ 2026 (Основні предмети)</h3>
+    <ul>
+      <li><strong>Українська мова:</strong> Синтаксис, пунктуація, норми правопису.</li>
+      <li><strong>Математика:</strong> Алгебра та початки аналізу, геометрія.</li>
+      <li><strong>Історія України:</strong> Від другої половини XVI ст. до сучасності.</li>
+    </ul>
+  </div>
+
+  <div class="study-category">
+    <h3>💼 Профільний блок: 073 Менеджмент</h3>
+    <ul>
+      <li><strong>Основи управління:</strong> Функції менеджменту (планування, організація, мотивація, контроль).</li>
+      <li><strong>Маркетингове середовище:</strong> SWOT-аналіз, дослідження ринку, 4P маркетинг.</li>
+      <li><strong>Економіка підприємства:</strong> Ресурси, витрати, прибуток.</li>
+      <li><strong>Лідерство та комунікації:</strong> Стилі керівництва, ділове спілкування.</li>
+    </ul>
+  </div>
+</div>
+    
 <div class="quiz-container">
     <div id="start-screen">
         <h1>🎓 IT PM Trainer v3.0</h1>
@@ -251,11 +312,31 @@
     } catch (e) { 
         msg.innerText = "Ти молодець! ПУЕТ чекає на тебе. (AI зараз відпочиває)"; 
     }
+
+        function showSection(sectionId) {
+  // Ховаємо всі секції
+  document.getElementById('test-section').style.display = 'none';
+  document.getElementById('study-section').style.display = 'none';
+  
+  // Знімаємо клас active з усіх кнопок
+  document.getElementById('btn-test').classList.remove('active');
+  document.getElementById('btn-study').classList.remove('active');
+  
+  // Показуємо потрібну секцію
+  if (sectionId === 'test') {
+    document.getElementById('test-section').style.display = 'block';
+    document.getElementById('btn-test').classList.add('active');
+  } else {
+    document.getElementById('study-section').style.display = 'block';
+    document.getElementById('btn-study').classList.add('active');
+  }
+}
     }
 </script>
 
 </body>
 </html>
+
 
 
 
