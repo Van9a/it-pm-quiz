@@ -30,9 +30,16 @@
     <div class="quiz-container">
         <div id="start-screen">
             <h1>🎓 IT PM Trainer v3.0</h1>
-            <p style="text-align:center">Обери предмет:</p>
-            <select id="subject-select" style="width:100%; padding:12px; border-radius:10px; margin-bottom:15px;"></select>
-            <button class="main-btn" onclick="startQuiz()">ПОЧАТИ</button>
+            
+            <label for="subject-select">Обери предмет:</label>
+            <select id="subject-select" onchange="updateTopicDropdown()">
+                </select>
+        
+            <label for="topic-select" style="margin-top: 15px; display: block;">Обери конкретну тему:</label>
+            <select id="topic-select">
+                </select>
+        
+            <button class="main-btn" onclick="startQuiz()" style="margin-top: 25px;">ПОЧАТИ</button>
         </div>
         <div id="quiz-screen" class="hidden">
             <div id="question-text" class="question"></div>
@@ -65,5 +72,6 @@
 <script src="script.js"></script>
 </body>
 </html>
+
 
 
