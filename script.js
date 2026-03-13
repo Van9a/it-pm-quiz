@@ -1,40 +1,165 @@
-:root { 
-    --primary: #2563eb; 
-    --ai-color: #8b5cf6; 
-    --bg: #f8fafc; 
-    --text: #1e293b; 
-    --white: #ffffff; 
-    --gray: #e2e8f0; 
+// Твоє постійне посилання на бекенд
+const GAS_URL = "https://script.google.com/macros/s/AKfycbzCkYy2XVplEL3qgx9HXKSIQKOGZnZSLYN6x512mZ6xHoKFdN24U8AC0YiuoMRm-eu_VA/exec";
+
+// 📚 ПОВНИЙ СПИСОК ТЕМ НМТ 2026
+const subjectsData = {
+    "Математика": [
+        "Числа, вирази та модулі",
+        "Показникові та логарифмічні рівняння",
+        "Похідна функції та її застосування",
+        "Інтеграл та площа фігур",
+        "Тригонометрія",
+        "Планіметрія (трикутники, кола)",
+        "Стереометрія (об'єми тіл)",
+        "Вектори та координати"
+    ],
+    "Українська мова": [
+        "Наголоси (обов'язковий список)",
+        "Фонетика та уподібнення",
+        "Морфологія: відмінювання числівників",
+        "Синтаксис складного речення",
+        "Пунктуація",
+        "Фразеологія"
+    ],
+    "Історія України": [
+        "Козаччина (XVI-XVIII ст.)",
+        "Україна в XIX ст.",
+        "Революція 1917-1921",
+        "Друга світова війна",
+        "Сучасна Україна (1991-2026)"
+    ],
+    "Менеджмент 073": [
+        "4 функції менеджменту",
+        "SWOT-аналіз",
+        "Маркетинг-мікс 4P",
+        "Стилі керівництва",
+        "Теорії мотивації"
+    ]
+};
+
+let score = 0;
+let currentQ = 0;
+const TOTAL_QUESTIONS = 5;
+let selectedSubject = "";
+
+// Ініціалізація списків при завантаженні
+function init() {
+    const subSelect = document.getElementById('subject-select');
+    const studyContainer = document.getElementById('study-list-container');
+    if (!subSelect || !studyContainer) return;
+
+    for (let sub in subjectsData) {
+        let opt = document.createElement('option');
+        opt.value = sub; opt.innerText = sub;
+        subSelect.appendChild(opt);
+
+        let cat = document.createElement('div');
+        cat.className = 'study-category';
+        cat.innerHTML = `<h3>${sub}</h3>`;
+        subjectsData[sub].forEach(topic => {
+            let link = document.createElement('span');
+            link.className = 'topic-link';
+            link.innerText = `📖 ${topic}`;
+            link.onclick = () => learnTopic(sub, topic);
+            cat.appendChild(link);
+        });
+        studyContainer.appendChild(cat);
+    }
 }
 
-body { 
-    font-family: 'Segoe UI', system-ui, sans-serif; 
-    background: var(--bg); 
-    color: var(--text); 
-    display: flex; 
-    flex-direction: column; 
-    align-items: center; 
-    padding: 20px; 
-    margin: 0; 
-    min-height: 100vh; 
+// Функція вивчення теми (УРОК)
+async function learnTopic(sub, topic) {
+    showSection('topic-detail');
+    const content = document.getElementById('topic-content');
+    content.innerHTML = `<div style="text-align:center; padding:50px;"><p>⌛ Gemini готує лекцію по темі <b>"${topic}"</b>...</p></div>`;
+
+    try {
+        const res = await fetch(GAS_URL, {
+            method: 'POST',
+            body: JSON.stringify({ action: "getTopicDetails", subject: sub, topic: topic })
+        });
+        const data = await res.json();
+        content.innerHTML = `<h2>${topic}</h2>` + formatAIResponse(data.content);
+        if (window.MathJax) MathJax.typesetPromise([content]);
+    } catch (e) { content.innerHTML = "❌ Помилка завантаження. Спробуй пізніше."; }
 }
 
-.main-menu { display: flex; justify-content: center; gap: 12px; margin-bottom: 30px; width: 100%; max-width: 600px; }
-.main-menu button { flex: 1; padding: 12px 15px; border: none; border-radius: 12px; background: #e2e8f0; cursor: pointer; font-weight: bold; transition: 0.3s; color: #475569; }
-.main-menu button.active { background: var(--primary); color: white; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3); }
+// Тестування
+async function startQuiz() {
+    selectedSubject = document.getElementById('subject-select').value;
+    score = 0; currentQ = 1;
+    document.getElementById('start-screen').classList.add('hidden');
+    document.getElementById('quiz-screen').classList.remove('hidden');
+    getAIQuestion();
+}
 
-.content-section { width: 100%; max-width: 600px; }
-.quiz-container, .study-container { background: var(--white); width: 100%; padding: 30px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); box-sizing: border-box; }
-.hidden { display: none !important; }
+async function getAIQuestion() {
+    const topic = subjectsData[selectedSubject][Math.floor(Math.random() * subjectsData[selectedSubject].length)];
+    const container = document.getElementById('options-container');
+    const qText = document.getElementById('question-text');
+    
+    qText.innerText = "AI формулює питання...";
+    container.innerHTML = "";
+    document.getElementById('loading-msg').classList.remove('hidden');
 
-.topic-link { cursor: pointer; color: var(--primary); text-decoration: underline; padding: 8px 0; display: block; transition: 0.2s; }
-.topic-link:hover { color: var(--ai-color); padding-left: 8px; }
+    try {
+        const res = await fetch(GAS_URL, {
+            method: 'POST',
+            body: JSON.stringify({ action: "generateQuestion", subject: selectedSubject, topic: topic })
+        });
+        const data = await res.json();
+        qText.innerText = data.q;
+        data.a.forEach((opt, idx) => {
+            const btn = document.createElement('button');
+            btn.className = 'main-btn quiz-opt';
+            btn.innerText = opt;
+            btn.onclick = () => checkAnswer(idx, data.correct, btn);
+            container.appendChild(btn);
+        });
+        if (window.MathJax) MathJax.typesetPromise();
+    } catch (e) { qText.innerText = "❌ Помилка AI"; }
+    finally { document.getElementById('loading-msg').classList.add('hidden'); }
+}
 
-.study-category { margin-bottom: 25px; border-left: 4px solid var(--primary); padding-left: 15px; text-align: left; }
-.study-category h3 { margin: 0 0 10px 0; color: var(--primary); }
+function checkAnswer(selected, correct, btn) {
+    const allBtns = document.querySelectorAll('.quiz-opt');
+    allBtns.forEach(b => b.disabled = true);
+    if (selected === correct) { btn.style.background = "#22c55e"; score++; }
+    else { btn.style.background = "#ef4444"; allBtns[correct].style.background = "#22c55e"; }
 
-#topic-content { line-height: 1.7; text-align: left; }
-.main-btn { background: var(--primary); color: white; border: none; padding: 16px; border-radius: 10px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 15px; }
-.btn-back { background: #64748b; width: auto; padding: 8px 15px; }
+    setTimeout(() => {
+        if (currentQ < TOTAL_QUESTIONS) { currentQ++; getAIQuestion(); }
+        else { showResults(); }
+    }, 2000);
+}
 
-select { width: 100%; padding: 12px; border-radius: 8px; margin-bottom: 15px; border: 1px solid var(--gray); }
+async function showResults() {
+    document.getElementById('quiz-screen').classList.add('hidden');
+    document.getElementById('result-screen').classList.remove('hidden');
+    document.getElementById('final-score').innerText = score;
+    const msg = document.getElementById('result-message');
+    msg.innerText = "⏳ Аналіз результатів...";
+    try {
+        const res = await fetch(GAS_URL, {
+            method: 'POST',
+            body: JSON.stringify({ action: "analyze", score: score, total: TOTAL_QUESTIONS, subject: selectedSubject })
+        });
+        const data = await res.json();
+        msg.innerText = data.analysis;
+    } catch (e) { msg.innerText = "Чудова робота!"; }
+}
+
+function showSection(id) {
+    document.querySelectorAll('.content-section').forEach(s => s.classList.add('hidden'));
+    document.getElementById(id + '-section').classList.remove('hidden');
+    document.getElementById('btn-test').classList.toggle('active', id === 'test');
+    document.getElementById('btn-study').classList.toggle('active', id === 'study');
+}
+
+function formatAIResponse(text) {
+    return text.replace(/## (.*?)\n/g, '<h3>$1</h3>')
+               .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
+               .replace(/\n/g, '<br>');
+}
+
+window.onload = init;
