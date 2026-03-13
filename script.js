@@ -1,5 +1,5 @@
-// ВСТАВ СВІЙ НОВИЙ URL ПІСЛЯ ДЕПЛОЮ!
-const GAS_URL = "https://script.google.com/macros/s/AKfycbxIpG_qoVbimsDMIYnUSWOsGa-P-T4wTGnUUOiavMNMSWnXPefWagU4seXiVR6tS2R5Dg/exec";
+// ТВІЙ НОВИЙ РОБОЧИЙ URL З БАЗОЮ ДАНИХ
+const GAS_URL = "https://script.google.com/macros/s/AKfycbyNNCCuYNGZLEi_lLyuegE_qtfibsjdJ9Qt-LpozcAW0E8AYF3RiUUerkB_aOiQ9BsjBg/exec";
 
 const subjectsData = {
     "Менеджмент 073": ["4 функції менеджменту", "SWOT-аналіз", "Маркетинг 4P", "Стилі керівництва", "Мотивація"],
@@ -10,10 +10,10 @@ const subjectsData = {
 
 let score = 0, currentQ = 1, TOTAL_QUESTIONS = 5;
 let selectedSubject = "", selectedTopic = "";
-let quizQuestions = []; // Масив для зберігання всіх питань тесту
+let quizQuestions = []; 
 
 function init() {
-    console.log("🚀 Тренажер v16 (Пакетна генерація + Кеш) активовано!"); 
+    console.log("🚀 Тренажер v17 (База Даних) активовано!"); 
     const subSelect = document.getElementById('subject-select');
     const studyContainer = document.getElementById('study-list-container');
     if (!subSelect) return;
@@ -81,7 +81,7 @@ function handleQuotaCooldown(container, waitTime, retryCallback) {
     container.innerHTML = `
         <div style="text-align:center; padding: 20px; border: 2px dashed #e5e7eb; border-radius: 10px;">
             <p style="color:#ef4444; font-weight:bold; font-size: 16px;">
-                ⏳ AI перезаряджається. Залишилось <span id="cd-sec">${waitTime}</span> сек...
+                ⏳ AI генерує базу. Залишилось <span id="cd-sec">${waitTime}</span> сек...
             </p>
             <div style="width:100%; background:#f3f4f6; height:12px; border-radius:6px; margin: 15px 0; overflow:hidden;">
                 <div id="cd-bar" style="width:100%; height:100%; background:#ef4444; transition:width 1s linear;"></div>
@@ -116,7 +116,6 @@ function handleQuotaCooldown(container, waitTime, retryCallback) {
     }, 1000);
 }
 
-// === ЗМІНЕНА ЛОГІКА ТЕСТУВАННЯ ===
 async function startQuiz() {
     selectedSubject = document.getElementById('subject-select').value;
     const tVal = document.getElementById('topic-select').value;
@@ -130,27 +129,25 @@ async function startQuiz() {
     const container = document.getElementById('options-container');
     const loader = document.getElementById('loading-msg');
     
-    qText.innerText = "Формуємо пакет питань...";
+    qText.innerText = "🔍 Перевіряємо базу даних (якщо питань немає - AI їх згенерує)...";
     container.innerHTML = "";
     loader.classList.remove('hidden');
 
-    // 1 ЗАПИТ ОДРАЗУ НА 5 ПИТАНЬ
-    const data = await fetchFromAI({ action: "generateQuiz", amount: TOTAL_QUESTIONS, subject: selectedSubject, topic: selectedTopic });
+    const data = await fetchFromAI({ action: "generateQuiz", subject: selectedSubject, topic: selectedTopic });
     loader.classList.add('hidden');
 
     if (data && data.isQuota) {
-        qText.innerText = "Упс, перевищено ліміт запитів.";
+        qText.innerText = "Google API просить зачекати хвилинку.";
         handleQuotaCooldown(container, data.waitTime, startQuiz);
         return;
     }
 
     if (!data || data.error || !Array.isArray(data)) {
-        qText.innerText = "⚠️ Помилка генерації тесту.";
+        qText.innerText = "⚠️ Помилка генерації. " + (data?.message || "");
         container.innerHTML = `<button class="quiz-opt" onclick="startQuiz()">🔄 Спробувати ще раз</button>`;
         return;
     }
 
-    // Зберігаємо масив питань і починаємо рендеринг
     quizQuestions = data;
     renderQuestion(); 
 }
@@ -161,7 +158,6 @@ function renderQuestion() {
     
     document.getElementById('quiz-progress').innerText = `Питання ${currentQ} з ${TOTAL_QUESTIONS}`;
     
-    // Беремо питання з локальної пам'яті (БЕЗ ЗАПИТІВ ДО AI!)
     const currentData = quizQuestions[currentQ - 1];
     
     qText.innerText = currentData.q;
@@ -194,18 +190,16 @@ function handleAnswer(selected, correct, btn) {
     }, 1500);
 }
 
-// === ЗМІНЕНА ЛОГІКА ЛЕКЦІЙ (КЕШУВАННЯ) ===
 async function learnTopic(sub, topic) {
     showSection('topic-detail');
     const content = document.getElementById('topic-content');
     
-    // Перевіряємо, чи є лекція в кеші
     const cacheKey = `lecture_${sub}_${topic}`;
     const cachedData = localStorage.getItem(cacheKey);
     
     if (cachedData) {
         content.innerHTML = `<h2>${topic}</h2>${cachedData.replace(/\n/g, '<br>')}`;
-        return; // Виходимо, запит до AI не потрібен!
+        return; 
     }
 
     content.innerHTML = "<p>⌛ Завантаження матеріалу...</p>";
@@ -217,7 +211,6 @@ async function learnTopic(sub, topic) {
     } else if (data && data.error) {
         content.innerHTML = `<h2>${topic}</h2><p style="color:red;">Помилка: ${data.message}</p><button onclick="learnTopic('${sub}', '${topic}')">🔄 Повторити</button>`;
     } else {
-        // Зберігаємо успішну відповідь у кеш браузера
         localStorage.setItem(cacheKey, data.content);
         content.innerHTML = `<h2>${topic}</h2>${data.content.replace(/\n/g, '<br>')}`;
     }
