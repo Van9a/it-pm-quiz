@@ -37,12 +37,15 @@ function updateTopicDropdown() {
 }
 
 // 🛡️ Секретна зброя: відправляємо запит як plain-text, щоб обійти CORS
+// Переводимо запити на GET. Це повністю обходить перевірки CORS у браузері.
 async function fetchFromAI(payload) {
     try {
-        // Найпростіший "голий" запит, щоб браузер не запускав перевірку CORS
-        const res = await fetch(GAS_URL, { 
-            method: 'POST', 
-            body: JSON.stringify(payload) 
+        // Перетворюємо об'єкт {action: "...", subject: "..."} у рядок URL-параметрів
+        const params = new URLSearchParams(payload).toString();
+        const url = `${GAS_URL}?${params}`;
+
+        const res = await fetch(url, { 
+            method: 'GET' 
         });
         
         const data = await res.json();
@@ -56,10 +59,9 @@ async function fetchFromAI(payload) {
         return data;
     } catch (e) {
         console.error("Fetch error:", e);
-        return { error: true, message: "Помилка зв'язку. Перевірте налаштування деплою в GAS (Execute as: Me, Access: Anyone)." };
+        return { error: true, message: "Помилка зв'язку. Якщо ви бачите це, переконайтеся що зробили деплой як 'Новая версия'." };
     }
 }
-
 async function startQuiz() {
     selectedSubject = document.getElementById('subject-select').value;
     const tVal = document.getElementById('topic-select').value;
