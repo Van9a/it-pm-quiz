@@ -10,18 +10,65 @@ const subjectsData = {
 let score = 0, currentQ = 1, TOTAL_QUESTIONS = 5, quizQuestions = [], selectedSubject = "", selectedTopic = "";
 
 function init() {
-    console.log("🚀 Тренажер v19.0 (SENIOR FIX) активовано!");
-    const subSelect = document.getElementById('subject-select');
-    if (!subSelect) return;
+    console.log("🚀 Тренажер v25.0 (З повернутим списком!) активовано!");
     
-    subSelect.innerHTML = "";
-    for (let sub in subjectsData) {
-        let opt = document.createElement('option');
-        opt.value = sub; opt.innerText = sub;
-        subSelect.appendChild(opt);
+    // Ініціалізація списків для тестів
+    const subSelect = document.getElementById('subject-select');
+    if (subSelect) {
+        subSelect.innerHTML = "";
+        for (let sub in subjectsData) {
+            let opt = document.createElement('option');
+            opt.value = sub; opt.innerText = sub;
+            subSelect.appendChild(opt);
+        }
+        subSelect.onchange = updateTopicDropdown;
+        updateTopicDropdown();
     }
-    subSelect.onchange = updateTopicDropdown;
-    updateTopicDropdown();
+    
+    // ВІДНОВЛЕНО: Малюємо список тем для вкладки "План навчання"
+    renderSyllabus();
+}
+
+function renderSyllabus() {
+    // Шукаємо контейнер для плану навчання (якщо його немає, створюємо під заголовком)
+    let container = document.getElementById('syllabus-list');
+    if (!container) {
+        const section = document.getElementById('syllabus-section');
+        if (!section) return;
+        container = document.createElement('div');
+        container.id = 'syllabus-list';
+        section.appendChild(container);
+    }
+
+    container.innerHTML = "";
+    
+    // Генеруємо красивий список
+    for (let sub in subjectsData) {
+        let block = document.createElement('div');
+        block.style.marginBottom = "20px";
+        block.innerHTML = `<h3 style="color: #2563eb; margin-bottom: 10px; border-bottom: 2px solid #e5e7eb; padding-bottom: 5px;">📚 ${sub}</h3>`;
+        
+        let ul = document.createElement('ul');
+        ul.style.listStyleType = "none";
+        ul.style.padding = "0";
+        ul.style.display = "flex";
+        ul.style.flexDirection = "column";
+        ul.style.gap = "8px";
+
+        subjectsData[sub].forEach(topic => {
+            let li = document.createElement('li');
+            li.innerHTML = `<button onclick="learnTopic('${sub}', '${topic}')" style="width: 100%; text-align: left; padding: 12px 15px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; cursor: pointer; font-size: 16px; transition: 0.2s;">📖 ${topic}</button>`;
+            
+            // Додаємо ефект наведення
+            li.firstElementChild.onmouseover = function() { this.style.background = '#e2e8f0'; };
+            li.firstElementChild.onmouseout = function() { this.style.background = '#f8fafc'; };
+            
+            ul.appendChild(li);
+        });
+        
+        block.appendChild(ul);
+        container.appendChild(block);
+    }
 }
 
 function updateTopicDropdown() {
@@ -36,18 +83,13 @@ function updateTopicDropdown() {
     });
 }
 
-// 🛡️ Секретна зброя: відправляємо запит як plain-text, щоб обійти CORS
-// Переводимо запити на GET. Це повністю обходить перевірки CORS у браузері.
+// Наш надійний GET-запит
 async function fetchFromAI(payload) {
     try {
-        // Перетворюємо об'єкт {action: "...", subject: "..."} у рядок URL-параметрів
         const params = new URLSearchParams(payload).toString();
         const url = `${GAS_URL}?${params}`;
 
-        const res = await fetch(url, { 
-            method: 'GET' 
-        });
-        
+        const res = await fetch(url, { method: 'GET' });
         const data = await res.json();
         
         if (data.error && data.message && data.message.includes("Quota")) {
@@ -59,9 +101,10 @@ async function fetchFromAI(payload) {
         return data;
     } catch (e) {
         console.error("Fetch error:", e);
-        return { error: true, message: "Помилка зв'язку. Якщо ви бачите це, переконайтеся що зробили деплой як 'Новая версия'." };
+        return { error: true, message: "Помилка зв'язку з сервером." };
     }
 }
+
 async function startQuiz() {
     selectedSubject = document.getElementById('subject-select').value;
     const tVal = document.getElementById('topic-select').value;
@@ -76,7 +119,7 @@ async function startQuiz() {
 async function loadQuestions() {
     const qText = document.getElementById('question-text');
     const container = document.getElementById('options-container');
-    qText.innerText = "🔍 Завантаження питань з бази...";
+    qText.innerHTML = "🔍 Завантаження питань...<br><span style='font-size:14px; color:#666;'>(Якщо бази немає, AI генерує нову)</span>";
     container.innerHTML = "";
     
     const data = await fetchFromAI({ action: "generateQuiz", subject: selectedSubject, topic: selectedTopic });
@@ -104,8 +147,11 @@ function renderQuestion() {
         btn.onclick = () => {
             const btns = document.querySelectorAll('.quiz-opt');
             btns.forEach(b => b.disabled = true);
-            if (idx === currentData.correct) { btn.style.background = "#22c55e"; score++; }
-            else { btn.style.background = "#ef4444"; btns[currentData.correct].style.background = "#22c55e"; }
+            if (idx === currentData.correct) { btn.style.background = "#22c55e"; btn.style.color = "#fff"; score++; }
+            else { 
+                btn.style.background = "#ef4444"; btn.style.color = "#fff"; 
+                btns[currentData.correct].style.background = "#22c55e"; btns[currentData.correct].style.color = "#fff"; 
+            }
             setTimeout(() => {
                 if (currentQ < TOTAL_QUESTIONS) { currentQ++; renderQuestion(); }
                 else showResults();
@@ -118,46 +164,16 @@ function renderQuestion() {
 async function learnTopic(sub, topic) {
     showSection('topic-detail');
     const content = document.getElementById('topic-content');
-    content.innerHTML = "<p>⌛ Завантаження лекції з бази даних...</p>";
+    content.innerHTML = `
+        <div style="text-align:center; padding: 40px;">
+            <p style="font-size: 18px;">⌛ Пишемо лекцію...</p>
+            <p style="color: #666;">(Якщо ти відкриваєш цю тему вперше, AI згенерує текст. Це займе до 10 секунд)</p>
+        </div>`;
     
     const data = await fetchFromAI({ action: "getTopicDetails", subject: sub, topic: topic });
     
     if (data.isQuota) return handleQuota(content, data.waitTime, () => learnTopic(sub, topic));
     if (data.error) { content.innerHTML = "<p style='color:red;'>⚠️ Помилка: " + data.message + "</p>"; return; }
     
-    content.innerHTML = `<h2>${topic}</h2><div style="line-height:1.6;">${data.content.replace(/\n/g, '<br>')}</div>`;
-}
-
-function handleQuota(container, time, retry) {
-    container.innerHTML = `
-        <div style="text-align:center; padding: 20px;">
-            <p>⏳ AI перевантажений. Авто-повтор через ${time} сек...</p>
-            <div style="width:100%; background:#eee; height:10px; border-radius:5px;">
-                <div id="pbar" style="width:100%; background:#ef4444; height:100%; transition:1s linear;"></div>
-            </div>
-        </div>`;
-    let left = time;
-    const int = setInterval(() => {
-        left--;
-        const pbar = document.getElementById('pbar');
-        if (pbar) pbar.style.width = (left / time) * 100 + '%';
-        if (left <= 0) { clearInterval(int); retry(); }
-    }, 1000);
-}
-
-async function showResults() {
-    document.getElementById('quiz-screen').classList.add('hidden');
-    document.getElementById('result-screen').classList.remove('hidden');
-    document.getElementById('final-score').innerText = score;
-    const msg = document.getElementById('result-message');
-    msg.innerText = "⏳ Отримання аналізу...";
-    const data = await fetchFromAI({ action: "analyze", score: score, total: TOTAL_QUESTIONS });
-    msg.innerHTML = data.analysis ? data.analysis.replace(/\n/g, '<br>') : "Аналіз завершено.";
-}
-
-function showSection(id) {
-    document.querySelectorAll('.content-section').forEach(s => s.classList.add('hidden'));
-    document.getElementById(id + '-section').classList.remove('hidden');
-}
-
-document.addEventListener('DOMContentLoaded', init);
+    // Форматуємо Markdown жирний текст (**)
+    let formattedContent = data.content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
