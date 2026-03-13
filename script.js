@@ -1,17 +1,17 @@
 const GAS_URL = "https://script.google.com/macros/s/AKfycbzCkYy2XVplEL3qgx9HXKSIQKOGZnZSLYN6x512mZ6xHoKFdN24U8AC0YiuoMRm-eu_VA/exec";
 
-// Твоя база знань
 const subjectsData = {
     "Математика": ["Числа, вирази та модулі", "Логарифми", "Похідна", "Інтеграл", "Тригонометрія", "Геометрія", "Вектори"],
     "Українська мова": ["Наголоси", "Фонетика", "Морфологія", "Синтаксис", "Пунктуація", "Фразеологія"],
     "Історія України": ["Козаччина", "XIX століття", "Революція 1917-21", "Друга світова", "Сучасність"],
-    "Менеджмент 073": ["4 функції менеджменту", "SWOT-аналіз", "Маркетинг 4P", "Стилі керівництва", "Теорії мотивації"]
+    "Менеджмент 073": ["4 функції менеджменту", "SWOT-аналіз", "Маркетинг 4P", "Стилі керівництва", "Мотивація"]
 };
 
 let score = 0, currentQ = 1, TOTAL_QUESTIONS = 5;
 let selectedSubject = "", selectedTopic = "";
-let nextQuestionBuffer = null; // "Сейф" для наступного питання
+let nextQuestionBuffer = null; // Кеш для швидкості
 
+// Ініціалізація
 function init() {
     const subSelect = document.getElementById('subject-select');
     const studyContainer = document.getElementById('study-list-container');
@@ -24,8 +24,7 @@ function init() {
         subSelect.appendChild(opt);
         
         let cat = document.createElement('div');
-        cat.className = 'study-category';
-        cat.innerHTML = `<h3>${sub}</h3>`;
+        cat.innerHTML = `<h3 style="color:var(--primary); margin: 20px 0 10px 0;">${sub}</h3>`;
         subjectsData[sub].forEach(topic => {
             let link = document.createElement('div');
             link.className = 'topic-link';
@@ -49,11 +48,11 @@ function updateTopicDropdown() {
     });
 }
 
-// Фоновий запит до AI
-async function fetchQuestion(sub, topic) {
+// Запит до AI
+async function fetchFromAI(payload) {
     const res = await fetch(GAS_URL, {
         method: 'POST',
-        body: JSON.stringify({ action: "generateQuestion", subject: sub, topic: topic })
+        body: JSON.stringify(payload)
     });
     return await res.json();
 }
@@ -67,12 +66,103 @@ async function startQuiz() {
     document.getElementById('start-screen').classList.add('hidden');
     document.getElementById('quiz-screen').classList.remove('hidden');
     
-    renderQuestion(); // Запуск першого питання
+    renderQuestion(); 
 }
 
 async function renderQuestion() {
     const qText = document.getElementById('question-text');
     const container = document.getElementById('options-container');
+    const loader = document.getElementById('loading-msg');
     document.getElementById('quiz-progress').innerText = `Питання ${currentQ} з ${TOTAL_QUESTIONS}`;
     
     let data;
+    if (nextQuestionBuffer) {
+        data = nextQuestionBuffer;
+        nextQuestionBuffer = null;
+        loader.classList.add('hidden');
+    } else {
+        qText.innerText = "";
+        loader.classList.remove('hidden');
+        data = await fetchFromAI({ action: "generateQuestion", subject: selectedSubject, topic: selectedTopic });
+        loader.classList.add('hidden');
+    }
+
+    qText.innerText = data.q;
+    container.innerHTML = "";
+    data.a.forEach((opt, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'quiz-opt';
+        btn.innerText = opt;
+        btn.onclick = () => handleAnswer(idx, data.correct, btn);
+        container.appendChild(btn);
+    });
+
+    if (window.MathJax) MathJax.typesetPromise([qText, container]);
+
+    // PRE-FETCH: вантажимо наступне, поки юзер думає
+    if (currentQ < TOTAL_QUESTIONS) {
+        fetchFromAI({ action: "generateQuestion", subject: selectedSubject, topic: selectedTopic }).then(res => {
+            nextQuestionBuffer = res;
+        });
+    }
+}
+
+function handleAnswer(selected, correct, btn) {
+    const btns = document.querySelectorAll('.quiz-opt');
+    btns.forEach(b => b.disabled = true);
+    
+    if (selected === correct) {
+        btn.style.background = "#22c55e"; btn.style.color = "white"; score++;
+    } else {
+        btn.style.background = "#ef4444"; btn.style.color = "white";
+        btns[correct].style.background = "#22c55e"; btns[correct].style.color = "white";
+    }
+
+    setTimeout(() => {
+        if (currentQ < TOTAL_QUESTIONS) {
+            currentQ++;
+            renderQuestion();
+        } else {
+            showResults();
+        }
+    }, 1800);
+}
+
+async function learnTopic(sub, topic) {
+    showSection('topic-detail');
+    const content = document.getElementById('topic-content');
+    content.innerHTML = `<div style="text-align:center; padding:50px;"><p>⌛ Gemini готує лекцію <b>"${topic}"</b>...</p></div>`;
+    try {
+        const data = await fetchFromAI({ action: "getTopicDetails", subject: sub, topic: topic });
+        content.innerHTML = `<h2>${topic}</h2>` + formatAIResponse(data.content);
+        if (window.MathJax) { setTimeout(() => { MathJax.typesetPromise([content]); }, 100); }
+    } catch (e) { content.innerHTML = "❌ Помилка завантаження."; }
+}
+
+async function showResults() {
+    document.getElementById('quiz-screen').classList.add('hidden');
+    document.getElementById('result-screen').classList.remove('hidden');
+    document.getElementById('final-score').innerText = score;
+    const msg = document.getElementById('result-message');
+    msg.innerText = "⏳ AI-ментор аналізує результат...";
+    try {
+        const data = await fetchFromAI({ action: "analyze", score: score, total: TOTAL_QUESTIONS, subject: selectedSubject });
+        msg.innerHTML = formatAIResponse(data.analysis);
+        if (window.MathJax) MathJax.typesetPromise([msg]);
+    } catch (e) { msg.innerText = "Готово!"; }
+}
+
+function showSection(id) {
+    document.querySelectorAll('.content-section').forEach(s => s.classList.add('hidden'));
+    document.getElementById(id + '-section').classList.remove('hidden');
+    if (id !== 'topic-detail') {
+        document.getElementById('btn-test').classList.toggle('active', id === 'test');
+        document.getElementById('btn-study').classList.toggle('active', id === 'study');
+    }
+}
+
+function formatAIResponse(text) {
+    return text ? text.replace(/### (.*?)\n/g, '<h3>$1</h3>').replace(/## (.*?)\n/g, '<h2>$1</h2>').replace(/\*\*(.*?)\*\*/g, '<b>$1</b>') : "";
+}
+
+document.addEventListener('DOMContentLoaded', init);
