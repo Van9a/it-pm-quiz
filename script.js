@@ -50,13 +50,20 @@ function updateTopicDropdown() {
 
 // Запит до AI
 async function fetchFromAI(payload) {
+    const startTime = performance.now(); // Початок відліку
+    console.log(`🚀 Запит [${payload.action}] відправлено...`);
+
     const res = await fetch(GAS_URL, {
         method: 'POST',
         body: JSON.stringify(payload)
     });
-    return await res.json();
+    
+    const data = await res.json();
+    const endTime = performance.now(); // Кінець відліку
+    
+    console.log(`✅ Відповідь отримана за ${((endTime - startTime) / 1000).toFixed(2)} сек.`);
+    return data;
 }
-
 async function startQuiz() {
     selectedSubject = document.getElementById('subject-select').value;
     const tVal = document.getElementById('topic-select').value;
