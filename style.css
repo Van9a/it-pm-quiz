@@ -148,6 +148,11 @@ body {
     text-align: center;
 }
 
+#topic-content, #question-text, #result-message {
+    white-space: pre-wrap; /* Зберігає переноси рядків від AI */
+    word-wrap: break-word;
+}
+
 #topic-content {
     text-align: left;
     line-height: 1.8;
