@@ -3,484 +3,51 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IT PM Exam Trainer + Gemini AI</title>
- <style>
-    /* 1. Основні змінні та скидання */
-    :root { 
-        --primary: #2563eb; 
-        --ai-color: #8b5cf6; 
-        --bg: #f8fafc; 
-        --text: #1e293b; 
-        --white: #ffffff; 
-        --gray: #e2e8f0;
-    }
-
-    body { 
-        font-family: 'Segoe UI', system-ui, sans-serif; 
-        background: var(--bg); 
-        color: var(--text); 
-        display: flex; 
-        flex-direction: column; /* Елементи один ПІД одним */
-        align-items: center;    /* Центрування по горизонталі */
-        padding: 20px; 
-        margin: 0; 
-        min-height: 100vh;
-    }
-
-    /* 2. Навігаційне меню */
-    .main-menu {
-        display: flex;
-        justify-content: center;
-        gap: 12px;
-        margin-bottom: 30px;
-        width: 100%;
-        max-width: 600px;
-    }
-
-    .main-menu button {
-        flex: 1;
-        padding: 12px 15px;
-        border: none;
-        border-radius: 10px;
-        background: #e2e8f0;
-        cursor: pointer;
-        font-weight: bold;
-        font-size: 0.95rem;
-        transition: all 0.3s ease;
-        color: #475569;
-    }
-
-    .main-menu button.active {
-        background: var(--primary);
-        color: white;
-        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
-    }
-
-    /* 3. Контейнери секцій */
-    .content-section {
-        width: 100%;
-        max-width: 600px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-    }
-
-    .quiz-container { 
-        background: var(--white); 
-        width: 100%;
-        padding: 30px; 
-        border-radius: 16px; 
-        box-shadow: 0 10px 25px rgba(0,0,0,0.05); 
-        text-align: center; 
-        box-sizing: border-box;
-    }
-
-    /* 4. Елементи тесту */
-    .hidden { display: none !important; }
-    
-    h1 { color: var(--primary); margin-top: 0; }
-    
-    .stats { 
-        display: flex; 
-        justify-content: space-between; 
-        margin-bottom: 25px; 
-        font-size: 0.85rem; 
-        color: #64748b; 
-        border-bottom: 1px solid var(--gray); 
-        padding-bottom: 12px; 
-    }
-
-    .question { 
-        font-size: 1.15rem; 
-        font-weight: 600; 
-        margin-bottom: 25px; 
-        text-align: left; 
-        line-height: 1.5; 
-    }
-
-    .options { 
-        display: flex; 
-        flex-direction: column; 
-        gap: 12px; 
-    }
-
-    .btn-option { 
-        padding: 14px 18px; 
-        border: 1px solid var(--gray); 
-        border-radius: 10px; 
-        cursor: pointer; 
-        text-align: left; 
-        background: var(--white); 
-        font-size: 1rem; 
-        transition: 0.2s; 
-    }
-
-    .btn-option:hover { 
-        background: #f1f5f9; 
-        border-color: var(--primary); 
-    }
-
-    .btn-option.correct { 
-        background: #dcfce7 !important; 
-        border-color: #22c55e !important; 
-        color: #166534; 
-    }
-
-    .btn-option.wrong { 
-        background: #fee2e2 !important; 
-        border-color: #ef4444 !important; 
-        color: #991b1b; 
-    }
-
-    /* 5. Кнопки дій */
-    .main-btn { 
-        background: var(--primary); 
-        color: white; 
-        border: none; 
-        padding: 16px 20px; 
-        border-radius: 10px; 
-        cursor: pointer; 
-        font-size: 1.05rem; 
-        font-weight: bold; 
-        width: 100%; 
-        transition: 0.3s; 
-    }
-
-    .ai-btn { 
-        background: var(--ai-color) !important; 
-        margin-top: 20px; 
-        font-size: 0.9rem !important; 
-    }
-
-    /* 6. План навчання */
-    #study-section h2 {
-        color: var(--text);
-        margin-bottom: 20px;
-    }
-
-    .study-category {
-        background: var(--white);
-        padding: 20px;
-        border-radius: 12px;
-        margin-bottom: 15px;
-        text-align: left;
-        width: 100%;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.02);
-        border-left: 5px solid var(--primary);
-        box-sizing: border-box;
-    }
-
-    .study-category h3 { margin-top: 0; color: var(--primary); font-size: 1.1rem; }
-    .study-category ul { padding-left: 20px; margin-bottom: 0; }
-    .study-category li { margin-bottom: 8px; line-height: 1.4; }
-
-    /* 7. Результати */
-    .score-circle { font-size: 3.5rem; font-weight: 800; color: var(--primary); margin: 20px 0; }
-    #result-message { 
-        font-style: italic; 
-        color: #475569; 
-        background: #f1f5f9; 
-        padding: 15px; 
-        border-radius: 10px; 
-        text-align: left;
-    }
-</style></style>
+    <title>PUET Expert 2026</title>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
 <nav class="main-menu">
-  <button onclick="showSection('test')" id="btn-test" class="active">📝 Тестування</button>
-  <button onclick="showSection('study')" id="btn-study">📚 План навчання 2026</button>
+  <button onclick="showSection('test')" id="btn-test" class="active">📝 Тест</button>
+  <button onclick="showSection('study')" id="btn-study">📚 Навчання</button>
 </nav>
 
 <div id="test-section" class="content-section">
     <div class="quiz-container">
-    <div id="start-screen">
-        <h1>🎓 IT PM Trainer v3.0</h1>
-        <p>Готовий до вступу в ПУЕТ? <br>Тепер з підтримкою <b>Gemini AI</b></p>
-        <button class="main-btn" onclick="startQuiz()">ПОЧАТИ ТЕСТ</button>
-    </div>
-
-    <div id="quiz-screen" class="hidden">
-        <div class="stats">
-            <span id="progress">Питання 1 з 50</span>
-            <span id="accuracy-live" style="font-weight: bold;">Точність: 0%</span>
-            <span id="score-live">Рахунок: 0</span>
+        <div id="start-screen">
+            <h1>🎓 IT PM Trainer v3.0</h1>
+            <p style="text-align:center">Обери предмет:</p>
+            <select id="subject-select" style="width:100%; padding:12px; border-radius:10px; margin-bottom:15px;"></select>
+            <button class="main-btn" onclick="startQuiz()">ПОЧАТИ</button>
         </div>
-        <div class="question" id="question-text">Завантаження...</div>
-        <div class="options" id="options-container"></div>
-        
-        <button id="ai-gen-btn" class="main-btn ai-btn" onclick="getAIQuestion()">
-            🪄 Замінити на складне AI-питання
-        </button>
+        <div id="quiz-screen" class="hidden">
+            <div id="question-text" class="question"></div>
+            <div id="options-container" class="options"></div>
+            <p id="loading-msg" class="hidden">⌛ Генеруємо...</p>
+        </div>
+        <div id="result-screen" class="hidden">
+            <div class="score-circle" id="final-score">0</div>
+            <div id="result-message">Аналіз...</div>
+            <button class="main-btn" onclick="location.reload()">ЗАНОВО</button>
+        </div>
     </div>
+</div>
 
-   <div id="result-screen" class="hidden">
-    <h1>Результат</h1>
-    <div class="score-circle" id="final-score">0</div>
-    <div style="font-size: 1.2rem; margin-bottom: 20px;">
-        Точність: <span id="final-percent" style="font-weight: 800;">0%</span>
+<div id="study-section" class="content-section hidden">
+    <div class="study-container" id="study-list-container">
+        <h2>📚 План підготовки</h2>
     </div>
-    <div id="result-message">AI-ментор готує аналіз...</div>
-    <button class="main-btn" style="margin-top: 20px;" onclick="location.reload()">СПРОБУВАТИ ЩЕ РАЗ</button>
 </div>
+
+<div id="topic-detail-section" class="content-section hidden">
+    <div class="study-container">
+        <button class="main-btn" onclick="showSection('study')" style="background:#64748b; width:auto; padding:8px 15px; margin-bottom:20px;">⬅ Назад</button>
+        <div id="topic-content"></div>
+    </div>
 </div>
-  </div>
 
-<div id="study-section" class="content-section" style="display:none;">
-  <h2>📌 План підготовки до НМТ та вступу на Менеджмент</h2>
-  
-  <div class="study-category">
-    <h3>📖 Блок НМТ 2026 (Основні предмети)</h3>
-    <ul>
-      <li><strong>Українська мова:</strong> Синтаксис, пунктуація, норми правопису.</li>
-      <li><strong>Математика:</strong> Алгебра та початки аналізу, геометрія.</li>
-      <li><strong>Історія України:</strong> Від другої половини XVI ст. до сучасності.</li>
-    </ul>
-  </div>
-
-  <div class="study-category">
-    <h3>💼 Профільний блок: 073 Менеджмент</h3>
-    <ul>
-      <li><strong>Основи управління:</strong> Функції менеджменту (планування, організація, мотивація, контроль).</li>
-      <li><strong>Маркетингове середовище:</strong> SWOT-аналіз, дослідження ринку, 4P маркетинг.</li>
-      <li><strong>Економіка підприємства:</strong> Ресурси, витрати, прибуток.</li>
-      <li><strong>Лідерство та комунікації:</strong> Стилі керівництва, ділове спілкування.</li>
-    </ul>
-  </div>
-</div>
-    
-
-
-<script>
-    // 1. НАЛАШТУВАННЯ (ОБОВ'ЯЗКОВО ВСТАВ СВІЙ URL)
-    const GAS_URL = 'https://script.google.com/macros/s/AKfycbzCkYy2XVplEL3qgx9HXKSIQKOGZnZSLYN6x512mZ6xHoKFdN24U8AC0YiuoMRm-eu_VA/exec'; 
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    
-    let currentIdx = 0;
-    let score = 0;
-    let canAnswer = true;
-
-    // 2. ЗВУКИ (Синтезатор)
-    function playNote(freq, dur, type = 'sine') {
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.type = type;
-        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-        gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + dur);
-        osc.connect(gain); gain.connect(audioCtx.destination);
-        osc.start(); osc.stop(audioCtx.currentTime + dur);
-    }
-
-    const sounds = {
-        correct: () => playNote(880, 0.2),
-        wrong: () => playNote(220, 0.4, 'triangle'),
-        finish: () => { 
-            playNote(523, 0.2); 
-            setTimeout(() => playNote(659, 0.2), 150); 
-            setTimeout(() => playNote(783, 0.4), 300); 
-        }
-    };
-
-    // 3. БАЗА ДАНИХ ПИТАНЬ
-    const quizData = [
-        // МЕНЕДЖМЕНТ
-        { q: "Яка функція менеджменту є вихідною для всіх інших?", a: ["Організація", "Планування", "Мотивація", "Контроль"], correct: 1 },
-        { q: "Хто є автором 'ієрархії потреб'?", a: ["Ф. Тейлор", "А. Маслоу", "М. Вебер", "А. Файоль"], correct: 1 },
-        { q: "Стиль керування з мінімальним втручанням:", a: ["Авторитарний", "Демократичний", "Ліберальний", "Директивний"], correct: 2 },
-        { q: "SWOT-аналіз: Що означає літера 'W'?", a: ["Сили", "Слабкості (Weaknesses)", "Можливості", "Загрози"], correct: 1 },
-        { q: "У Scrum, як називається зустріч для огляду результатів Спринту?", a: ["Sprint Planning", "Daily Scrum", "Sprint Review", "Sprint Retrospective"], correct: 2 },
-        { q: "Метод 'Дельфі' використовується для:", a: ["Оцінки персоналу", "Прогнозування через експертів", "Розрахунку податків", "Тестування ПЗ"], correct: 1 },
-        { q: "Яка роль відповідає за усунення перешкод у Scrum-команді?", a: ["Product Owner", "Scrum Master", "Developer", "CEO"], correct: 1 },
-        { q: "Делегування — це передача:", a: ["Відповідальності", "Повноважень та прав", "Зарплати", "Робочого місця"], correct: 1 },
-        { q: "Теорія очікувань Врума базується на:", a: ["Грошах", "Справедливості", "Очікуванні результату та цінності винагороди", "Потребах"], correct: 2 },
-        { q: "До якого рівня менеджменту належить 'Project Manager'?", a: ["Top", "Middle", "Lower", "Owner"], correct: 1 },
-        { q: "Матрична структура управління характеризується:", a: ["Подвійним підпорядкуванням", "Суворою ієрархією", "Відсутністю босів", "Поділом за кольорами"], correct: 0 },
-        { q: "Місія організації — це:", a: ["План на рік", "Головна мета та сенс існування", "Список послуг", "Статут"], correct: 1 },
-        { q: "Критерій SMART: Що означає 'R'?", a: ["Rapid", "Relevant (Актуальний)", "Responsible", "Risk"], correct: 1 },
-        { q: "Який тип контролю здійснюється ДО початку робіт?", a: ["Поточний", "Заключний", "Попередній", "Статистичний"], correct: 2 },
-        { q: "Хто вважається 'батьком' наукового менеджменту?", a: ["Форд", "Тейлор", "Друкер", "Маск"], correct: 1 },
-        // МАРКЕТИНГ
-        { q: "Класичний комплекс маркетингу (4P) включає:", a: ["People, Price, Plan", "Product, Price, Place, Promotion", "Power, Profit, Paper", "Price, Post"], correct: 1 },
-        { q: "Життєвий цикл товару починається з етапу:", a: ["Зростання", "Зрілість", "Впровадження", "Занепад"], correct: 2 },
-        { q: "Цільова аудиторія (ЦА) — це:", a: ["Всі люди", "Конкретна група споживачів", "Конкуренти", "Продавці"], correct: 1 },
-        { q: "Брендинг — це процес:", a: ["Кодування", "Створення образу та репутації", "Зниження цін", "Логістики"], correct: 1 },
-        { q: "Сегментація ринку — це:", a: ["Купівля акцій", "Поділ ринку на групи за потребами", "Знищення конкурентів", "Реклама"], correct: 1 },
-        { q: "B2B маркетинг — це:", a: ["Продаж людям", "Співпраця між компаніями", "Держзакупівлі", "Благодійність"], correct: 1 },
-        { q: "Демпінг — це:", a: ["Якість", "Продаж за штучно заниженими цінами", "Упаковка", "Біржа"], correct: 1 },
-        { q: "Унікальна торгова пропозиція (УТП) має на меті:", a: ["Копіювання", "Виокремлення продукту серед аналогів", "Логотип", "Податки"], correct: 1 },
-        { q: "Який канал просування найкращий для IT?", a: ["Білборди", "Digital (SMM, SEO, PPC)", "Радіо", "Листівки"], correct: 1 },
-        { q: "Бенчмаркінг — це:", a: ["Аналіз досвіду конкурентів", "Перевірка серверів", "Ремонт", "Дивіденди"], correct: 0 },
-        { q: "CRM-система потрібна для:", a: ["Бухгалтерії", "Управління відносинами з клієнтами", "Дизайну", "Збору ПК"], correct: 1 },
-        { q: "Фокус-група — це метод:", a: ["Якісного дослідження ринку", "Кількісного аналізу", "Програмування", "Юридичної перевірки"], correct: 0 },
-        { q: "Позиціонування — це:", a: ["Місце в магазині", "Місце в свідомості споживача", "Ціна", "Штрих-код"], correct: 1 },
-        { q: "Мерчандайзинг — це маркетинг у:", a: ["Соцмережах", "Точках продажу", "E-mail", "Месенджерах"], correct: 1 },
-        { q: "LTV (Lifetime Value) показує:", a: ["Ціну кліка", "Прибуток від клієнта за весь час", "Підписників", "Вагу"], correct: 1 },
-        // ЕКОНОМІКА
-        { q: "Рентабельність — це показник:", a: ["Витрат", "Ефективності використання ресурсів", "Обороту", "Кількості людей"], correct: 1 },
-        { q: "Основні засоби — це:", a: ["Гроші", "Будівлі, обладнання, техніка", "Продукція", "Сировина"], correct: 1 },
-        { q: "Амортизація — це:", a: ["Ремонт", "Поступове перенесення вартості на собівартість", "Меблі", "Податок"], correct: 1 },
-        { q: "Собівартість включає:", a: ["Прибуток", "Всі витрати на виробництво та реалізацію", "Тільки податки", "Тільки рекламу"], correct: 1 },
-        { q: "Точка беззбитковості — це коли:", a: ["Прибуток макс", "Дохід дорівнює витратам", "Банкрутство", "Ціна низька"], correct: 1 },
-        { q: "Ліквідність — це здатність:", a: ["Виробляти", "Швидко перетворювати активи у гроші", "Нанімати", "Відкривати філії"], correct: 1 },
-        { q: "Оборотні кошти — це ресурси, що:", a: ["Служать роки", "Споживаються за один цикл", "Належать директору", "В банку"], correct: 1 },
-        { q: "Продуктивність праці — це:", a: ["Години", "Кількість продукції на 1 працівника в одиницю часу", "Премії", "Настрій"], correct: 1 },
-        { q: "Маржинальний дохід — це:", a: ["Різниця між виручкою та змінними витратами", "ПДВ", "Чистий прибуток", "Кредит"], correct: 0 },
-        { q: "Інфляція — це:", a: ["Курс долара", "Знецінення грошей (ріст цін)", "Падіння попиту", "Дефіцит"], correct: 1 },
-        { q: "Статутний капітал формується:", a: ["Через рік", "При створенні власниками", "З кредитів", "З боргів"], correct: 1 },
-        { q: "Активи бувають:", a: ["Тільки гроші", "Оборотні та необоротні", "Тільки нерухомі", "Добрі/погані"], correct: 1 },
-        { q: "Банкрутство — це:", a: ["Зміна назви", "Визнана судом неспроможність платити борги", "Відпустка", "Бонуси"], correct: 1 },
-        { q: "KPI — це:", a: ["Університет", "Ключові показники ефективності", "Шифр", "База"], correct: 1 },
-        { q: "Дивіденди — це:", a: ["Частина прибутку акціонерам", "Податок", "Зарплата", "Оренда"], correct: 0 },
-        // ФІНАНСИ
-        { q: "Який податок основний для працівників?", a: ["ПДВ", "ПДФО", "Акциз", "Земля"], correct: 1 },
-        { q: "Дефіцит бюджету — це коли:", a: ["Доходи > Витрати", "Витрати > Доходи", "Грошей рівно", "Податків 0"], correct: 1 },
-        { q: "ФОП — це:", a: ["Програма", "Фізична особа-підприємець", "Фірма", "Фонд"], correct: 1 },
-        { q: "Трудовий договір — це угода між:", a: ["Фірмами", "Працівником і роботодавцем", "Банком і клієнтом", "Державою"], correct: 1 },
-        { q: "Кредитор — це той, хто:", a: ["Бере в борг", "Надає в борг", "Продає", "Пише код"], correct: 1 }
-    ];
-
-    function showSection(sectionId) {
-  // Ховаємо всі секції
-  document.getElementById('test-section').style.display = 'none';
-  document.getElementById('study-section').style.display = 'none';
-  
-  // Знімаємо клас active з усіх кнопок
-  document.getElementById('btn-test').classList.remove('active');
-  document.getElementById('btn-study').classList.remove('active');
-  
-  // Показуємо потрібну секцію
-  if (sectionId === 'test') {
-    document.getElementById('test-section').style.display = 'block';
-    document.getElementById('btn-test').classList.add('active');
-  } else {
-    document.getElementById('study-section').style.display = 'block';
-    document.getElementById('btn-study').classList.add('active');
-  }
-}
-    
-    // 4. ЛОГІКА ТЕСТУ
-    function startQuiz() {
-        if (audioCtx.state === 'suspended') audioCtx.resume();
-        document.getElementById('start-screen').classList.add('hidden');
-        document.getElementById('quiz-screen').classList.remove('hidden');
-        quizData.sort(() => Math.random() - 0.5);
-        loadQuestion();
-    }
-
-    function updateStatsUI(isAnswered = false) {
-        const answeredCount = isAnswered ? currentIdx + 1 : currentIdx;
-        document.getElementById('progress').innerText = `Питання ${currentIdx + 1} з ${quizData.length}`;
-        document.getElementById('score-live').innerText = `Рахунок: ${score}`;
-        const accElement = document.getElementById('accuracy-live');
-        if (answeredCount > 0) {
-            const acc = Math.round((score / answeredCount) * 100);
-            accElement.innerText = `Точність: ${acc}%`;
-            accElement.style.color = acc >= 80 ? "#22c55e" : (acc >= 50 ? "#f59e0b" : "#ef4444");
-        }
-    }
-
-    function loadQuestion() {
-        canAnswer = true;
-        const q = quizData[currentIdx];
-        document.getElementById('question-text').innerText = q.q;
-        updateStatsUI(false);
-        const container = document.getElementById('options-container');
-        container.innerHTML = '';
-        q.a.forEach((opt, i) => {
-            const btn = document.createElement('button');
-            btn.className = 'btn-option';
-            btn.innerText = opt;
-            btn.onclick = () => checkAnswer(i, btn);
-            container.appendChild(btn);
-        });
-    }
-
-    function checkAnswer(idx, btn) {
-        if (!canAnswer) return;
-        canAnswer = false;
-        const correctIdx = quizData[currentIdx].correct;
-        if (idx === correctIdx) { score++; btn.classList.add('correct'); sounds.correct(); } 
-        else { btn.classList.add('wrong'); document.querySelectorAll('.btn-option')[correctIdx].classList.add('correct'); sounds.wrong(); }
-        updateStatsUI(true);
-        setTimeout(() => {
-            currentIdx++;
-            if (currentIdx < quizData.length) loadQuestion(); else showResults();
-        }, 1200);
-    }
-
-    // 5. ФУНКЦІЇ AI
-    async function getAIQuestion() {
-    const btn = document.getElementById('ai-gen-btn');
-    btn.disabled = true;
-    btn.innerText = "⏳ Gemini думає...";
-
-    try {
-        const response = await fetch(GAS_URL, {
-            method: 'POST',
-            body: JSON.stringify({ action: "generateQuestion" })
-        });
-        
-        const text = await response.text(); // Отримуємо текст
-        const data = JSON.parse(text);      // Перетворюємо в об'єкт
-        
-        quizData[currentIdx] = data;
-        loadQuestion();
-        btn.innerText = "🪄 Згенерувати ще одне";
-    } catch (e) {
-        console.error("Помилка:", e);
-        document.getElementById('question-text').innerText = "AI тимчасово не відповів, спробуй ще раз!";
-    } finally {
-        btn.disabled = false;
-    }
-}
-
-    async function showResults() {
-        document.getElementById('quiz-screen').classList.add('hidden');
-        document.getElementById('result-screen').classList.remove('hidden');
-        const finalPercent = Math.round((score / quizData.length) * 100);
-        document.getElementById('final-score').innerText = `${score} / ${quizData.length}`;
-        const fp = document.getElementById('final-percent');
-        if (fp) fp.innerText = `${finalPercent}%`;
-        
-        sounds.finish();
-        const msg = document.getElementById('result-message');
-        msg.innerText = "AI-ментор готує аналіз...";
-
-      try {
-        const res = await fetch(GAS_URL, { 
-            method: 'POST', 
-            body: JSON.stringify({ 
-                action: "analyze", 
-                score: score, 
-                total: quizData.length, 
-                percent: finalPercent 
-            }) 
-        });
-        const text = await res.text();
-        const data = JSON.parse(text);
-        msg.innerText = data.analysis; // Тут з'явиться текст від Gemini
-    } catch (e) { 
-        msg.innerText = "Ти молодець! ПУЕТ чекає на тебе. (AI зараз відпочиває)"; 
-    }
-
-        
-    }
-</script>
-
+<script src="script.js"></script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
