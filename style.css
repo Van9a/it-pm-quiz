@@ -149,8 +149,9 @@ body {
 }
 
 #topic-content, #question-text, #result-message {
-    white-space: pre-wrap; /* Зберігає переноси рядків від AI */
-    word-wrap: break-word;
+    white-space: pre-wrap; /* Це змушує браузер бачити "Enter" від нейромережі */
+    text-align: left;
+    line-height: 1.6;
 }
 
 #topic-content {
