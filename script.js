@@ -177,9 +177,10 @@ function showSection(id) {
 }
 
 function formatAIResponse(text) {
-    return text.replace(/## (.*?)\n/g, '<h3>$1</h3>')
-               .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
-               .replace(/\n/g, '<br>');
+    return text
+        .replace(/### (.*?)\n/g, '<h3>$1</h3>')
+        .replace(/## (.*?)\n/g, '<h2>$1</h2>')
+        .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
 }
 
 window.onload = init;
