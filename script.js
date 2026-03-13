@@ -55,22 +55,22 @@ function updateTopicDropdown() {
  * 2. Ядро запитів (З захистом від "битого" JSON)
  */
 async function fetchFromAI(payload) {
-    const start = performance.now();
     try {
         const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(payload) });
         const rawText = await res.text();
         
-        // Видаляємо маркдаун-теги, якщо AI їх додав
+        if (!rawText || rawText.trim() === "") {
+            throw new Error("Порожня відповідь від сервера (Timeout)");
+        }
+
         const cleanText = rawText.replace(/```json|```/g, "").trim();
-        
         const data = JSON.parse(cleanText);
-        console.log(`⏱️ [${payload.action}] за ${((performance.now() - start)/1000).toFixed(2)}с`);
         
         if (data.error) throw new Error(data.message);
         return data;
     } catch (e) {
-        console.error("🚨 Помилка обробки запиту:", e);
-        return null;
+        console.error("🚨 Помилка:", e.message);
+        return null; // Тепер сайт просто напише "Помилка зв'язку", а не впаде
     }
 }
 
