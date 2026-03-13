@@ -1,8 +1,9 @@
 /**
- * PUET AI EXPERT - v9.1 (No-Syntax-Errors Edition)
+ * PUET AI EXPERT - v9.6
+ * Актуальний URL: AKfycbxIpG_qoVbimsDMIYnUSWOsGa-P-T4wTGnUUOiavMNMSWnXPefWagU4seXiVR6tS2R5Dg
  */
 
-const GAS_URL = "https://script.google.com/macros/s/AKfycbzb1wVXX4gPlkRb4LAddeBG8-9MMt6dFaI4gIHJWRJqqMT2_A8FwH2GLB4YI5civWRqSQ/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbxIpG_qoVbimsDMIYnUSWOsGa-P-T4wTGnUUOiavMNMSWnXPefWagU4seXiVR6tS2R5Dg/exec";
 
 const subjectsData = {
     "Математика": ["Логарифми", "Похідна", "Інтеграл", "Тригонометрія", "Вектори", "Геометрія"],
@@ -15,9 +16,8 @@ let score = 0, currentQ = 1, TOTAL_QUESTIONS = 5;
 let selectedSubject = "", selectedTopic = "";
 let nextQuestionBuffer = null;
 
-// 1. Ініціалізація
 function init() {
-    console.log("🚀 Скрипт запущено, наповнюю списки...");
+    console.log("🚀 Скрипт запущено. Підключено URL: " + GAS_URL.substring(0, 45) + "...");
     const subSelect = document.getElementById('subject-select');
     const studyContainer = document.getElementById('study-list-container');
     
@@ -59,22 +59,28 @@ function updateTopicDropdown() {
     });
 }
 
-// 2. Запити
 async function fetchFromAI(payload) {
+    const startTime = performance.now();
     try {
         const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(payload) });
         const rawText = await res.text();
+        
+        // Видаляємо можливий Markdown та зайві пробіли
         const cleanText = rawText.replace(/```json|```/g, "").trim();
+        
+        if (!cleanText) throw new Error("Сервер повернув порожню відповідь");
+
         const data = JSON.parse(cleanText);
+        console.log(`✅ [${payload.action}] виконано за ${((performance.now() - startTime)/1000).toFixed(2)}с`);
+        
         if (data.error) throw new Error(data.message);
         return data;
     } catch (e) {
-        console.error("🚨 Помилка AI:", e.message);
-        return null;
+        console.error("🚨 Помилка діагностики:", e.message);
+        return { error: true, message: e.message };
     }
 }
 
-// 3. Тестування
 async function startQuiz() {
     selectedSubject = document.getElementById('subject-select').value;
     const tVal = document.getElementById('topic-select').value;
@@ -90,7 +96,9 @@ async function renderQuestion() {
     const qText = document.getElementById('question-text');
     const container = document.getElementById('options-container');
     const loader = document.getElementById('loading-msg');
-    document.getElementById('quiz-progress').innerText = `Питання ${currentQ} з ${TOTAL_QUESTIONS}`;
+    const progress = document.getElementById('quiz-progress');
+    
+    if (progress) progress.innerText = `Питання ${currentQ} з ${TOTAL_QUESTIONS}`;
     
     let data;
     if (nextQuestionBuffer && !nextQuestionBuffer.error) {
@@ -104,8 +112,8 @@ async function renderQuestion() {
         loader.classList.add('hidden');
     }
 
-    if (!data) {
-        qText.innerText = "⚠️ Помилка завантаження. Спробуйте ще раз.";
+    if (!data || data.error) {
+        qText.innerHTML = `<span style="color:#ef4444">⚠️ ${data?.message || "Помилка завантаження"}. Спробуйте ще раз.</span>`;
         return;
     }
 
@@ -121,6 +129,7 @@ async function renderQuestion() {
 
     if (window.MathJax) MathJax.typesetPromise([qText, container]);
 
+    // Pre-fetch наступного питання
     if (currentQ < TOTAL_QUESTIONS) {
         fetchFromAI({ action: "generateQuestion", subject: selectedSubject, topic: selectedTopic })
             .then(res => { if(res && !res.error) nextQuestionBuffer = res; });
@@ -142,13 +151,12 @@ function handleAnswer(selected, correct, btn) {
     }, 1500);
 }
 
-// 4. Лекції та Аналіз
 async function learnTopic(sub, topic) {
     showSection('topic-detail');
     const content = document.getElementById('topic-content');
     content.innerHTML = `<p>⌛ Готуємо лекцію...</p>`;
     const data = await fetchFromAI({ action: "getTopicDetails", subject: sub, topic: topic });
-    content.innerHTML = `<h2>${topic}</h2>` + formatAIResponse(data.content);
+    content.innerHTML = `<h2>${topic}</h2>` + formatAIResponse(data.content || "Не вдалося завантажити контент.");
     if (window.MathJax) MathJax.typesetPromise([content]);
 }
 
@@ -157,9 +165,9 @@ async function showResults() {
     document.getElementById('result-screen').classList.remove('hidden');
     document.getElementById('final-score').innerText = score;
     const msg = document.getElementById('result-message');
-    msg.innerText = "⏳ AI аналізує...";
+    msg.innerText = "⏳ AI аналізує твої успіхи...";
     const data = await fetchFromAI({ action: "analyze", score: score, total: TOTAL_QUESTIONS, subject: selectedSubject });
-    msg.innerHTML = formatAIResponse(data.analysis);
+    msg.innerHTML = formatAIResponse(data.analysis || "Тест завершено!");
 }
 
 function showSection(id) {
@@ -176,5 +184,4 @@ function formatAIResponse(text) {
                .replace(/\n/g, '<br>');
 }
 
-// Запуск
 document.addEventListener('DOMContentLoaded', init);
