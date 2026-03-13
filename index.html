@@ -209,6 +209,25 @@
         { q: "Кредитор — це той, хто:", a: ["Бере в борг", "Надає в борг", "Продає", "Пише код"], correct: 1 }
     ];
 
+    function showSection(sectionId) {
+  // Ховаємо всі секції
+  document.getElementById('test-section').style.display = 'none';
+  document.getElementById('study-section').style.display = 'none';
+  
+  // Знімаємо клас active з усіх кнопок
+  document.getElementById('btn-test').classList.remove('active');
+  document.getElementById('btn-study').classList.remove('active');
+  
+  // Показуємо потрібну секцію
+  if (sectionId === 'test') {
+    document.getElementById('test-section').style.display = 'block';
+    document.getElementById('btn-test').classList.add('active');
+  } else {
+    document.getElementById('study-section').style.display = 'block';
+    document.getElementById('btn-study').classList.add('active');
+  }
+}
+    
     // 4. ЛОГІКА ТЕСТУ
     function startQuiz() {
         if (audioCtx.state === 'suspended') audioCtx.resume();
@@ -314,29 +333,13 @@
         msg.innerText = "Ти молодець! ПУЕТ чекає на тебе. (AI зараз відпочиває)"; 
     }
 
-        function showSection(sectionId) {
-  // Ховаємо всі секції
-  document.getElementById('test-section').style.display = 'none';
-  document.getElementById('study-section').style.display = 'none';
-  
-  // Знімаємо клас active з усіх кнопок
-  document.getElementById('btn-test').classList.remove('active');
-  document.getElementById('btn-study').classList.remove('active');
-  
-  // Показуємо потрібну секцію
-  if (sectionId === 'test') {
-    document.getElementById('test-section').style.display = 'block';
-    document.getElementById('btn-test').classList.add('active');
-  } else {
-    document.getElementById('study-section').style.display = 'block';
-    document.getElementById('btn-study').classList.add('active');
-  }
-}
+        
     }
 </script>
 
 </body>
 </html>
+
 
 
 
