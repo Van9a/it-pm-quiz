@@ -1,7 +1,7 @@
-// 🔗 Твій постійний бекенд
+// 🔗 Твій актуальний бекенд (вже вшито)
 const GAS_URL = "https://script.google.com/macros/s/AKfycbzCkYy2XVplEL3qgx9HXKSIQKOGZnZSLYN6x512mZ6xHoKFdN24U8AC0YiuoMRm-eu_VA/exec";
 
-// 📚 ПОВНИЙ СПИСОК ТЕМ НМТ 2026
+// 📚 ПОВНА БАЗА ТЕМ ДЛЯ НМТ 2026
 const subjectsData = {
     "Математика": [
         "Числа, вирази та модулі",
@@ -37,35 +37,37 @@ const subjectsData = {
     ]
 };
 
-// Глобальні змінні стану
+// Змінні стану додатка
 let score = 0;
 let currentQ = 0;
 const TOTAL_QUESTIONS = 5;
 let selectedSubject = "";
 let selectedTopic = "";
 
-// 1. ІНІЦІАЛІЗАЦІЯ (запуск при завантаженні сторінки)
+// 1. ІНІЦІАЛІЗАЦІЯ ПРИ ЗАВАНТАЖЕННІ
 function init() {
     const subSelect = document.getElementById('subject-select');
     const studyContainer = document.getElementById('study-list-container');
+    
     if (!subSelect || !studyContainer) return;
 
-    // Очищуємо контейнери
     subSelect.innerHTML = "";
     studyContainer.innerHTML = "";
 
+    // Наповнюємо інтерфейс даними
     for (let sub in subjectsData) {
-        // Заповнюємо вибір предметів для тесту
+        // Опція для тесту
         let opt = document.createElement('option');
         opt.value = sub; opt.innerText = sub;
         subSelect.appendChild(opt);
 
-        // Заповнюємо розділ "Навчання" картками
+        // Картки для навчання
         let cat = document.createElement('div');
-        cat.className = 'study-category';
-        cat.innerHTML = `<h3>${sub}</h3>`;
+        cat.className = 'study-category'; // Клас для CSS
+        cat.innerHTML = `<h3 style="color:var(--primary); margin-top:20px;">${sub}</h3>`;
+        
         subjectsData[sub].forEach(topic => {
-            let link = document.createElement('span');
+            let link = document.createElement('div');
             link.className = 'topic-link';
             link.innerText = `📖 ${topic}`;
             link.onclick = () => learnTopic(sub, topic);
@@ -74,11 +76,11 @@ function init() {
         studyContainer.appendChild(cat);
     }
 
-    // Вперше оновлюємо список тем для тесту
+    // Оновлюємо випадаючий список тем для першого предмету
     updateTopicDropdown();
 }
 
-// 2. ОНОВЛЕННЯ СПИСКУ ТЕМ У ТЕСТІ (при зміні предмета)
+// 2. ДИНАМІЧНЕ ОНОВЛЕННЯ ТЕМ У ТЕСТІ
 function updateTopicDropdown() {
     const sub = document.getElementById('subject-select').value;
     const topicSelect = document.getElementById('topic-select');
@@ -86,13 +88,13 @@ function updateTopicDropdown() {
 
     topicSelect.innerHTML = "";
 
-    // Додаємо опцію рандому
+    // Додаємо опцію "Випадково"
     let defaultOpt = document.createElement('option');
     defaultOpt.value = "random";
     defaultOpt.innerText = "🎲 Випадкова тема з курсу";
     topicSelect.appendChild(defaultOpt);
 
-    // Додаємо конкретні теми
+    // Додаємо конкретні теми з масиву
     subjectsData[sub].forEach(t => {
         let opt = document.createElement('option');
         opt.value = t; opt.innerText = t;
@@ -100,11 +102,11 @@ function updateTopicDropdown() {
     });
 }
 
-// 3. ЛОГІКА ВИВЧЕННЯ ТЕМИ (УРОК)
+// 3. ПЕРЕГЛЯД ЛЕКЦІЇ (НАВЧАННЯ)
 async function learnTopic(sub, topic) {
     showSection('topic-detail');
     const content = document.getElementById('topic-content');
-    content.innerHTML = `<div style="text-align:center; padding:50px;"><p>⌛ Gemini готує лекцію по темі <b>"${topic}"</b>...</p></div>`;
+    content.innerHTML = `<div style="text-align:center; padding:50px;"><p>⌛ Gemini готує лекцію <b>"${topic}"</b>...</p></div>`;
 
     try {
         const res = await fetch(GAS_URL, {
@@ -113,16 +115,15 @@ async function learnTopic(sub, topic) {
         });
         const data = await res.json();
         
-        // Вставляємо текст (форматування через CSS white-space: pre-wrap)
         content.innerHTML = `<h2>${topic}</h2>` + formatAIResponse(data.content);
         
-        // Рендеримо формули MathJax
+        // Рендеринг MathJax (якщо є формули)
         if (window.MathJax) {
             setTimeout(() => {
                 MathJax.typesetPromise([content]).catch(err => console.log(err));
             }, 100);
         }
-    } catch (e) { content.innerHTML = "❌ Помилка завантаження матеріалу."; }
+    } catch (e) { content.innerHTML = "❌ Не вдалося завантажити матеріал."; }
 }
 
 // 4. ЛОГІКА ТЕСТУВАННЯ
@@ -130,15 +131,14 @@ async function startQuiz() {
     selectedSubject = document.getElementById('subject-select').value;
     const topicVal = document.getElementById('topic-select').value;
     
-    // Визначаємо тему: обрана або випадкова
+    // Вибираємо тему
     if (topicVal === "random") {
         selectedTopic = subjectsData[selectedSubject][Math.floor(Math.random() * subjectsData[selectedSubject].length)];
     } else {
         selectedTopic = topicVal;
     }
 
-    score = 0;
-    currentQ = 1;
+    score = 0; currentQ = 1;
     document.getElementById('start-screen').classList.add('hidden');
     document.getElementById('quiz-screen').classList.remove('hidden');
     getAIQuestion();
@@ -147,8 +147,10 @@ async function startQuiz() {
 async function getAIQuestion() {
     const container = document.getElementById('options-container');
     const qText = document.getElementById('question-text');
+    const progressText = document.getElementById('quiz-progress');
     
-    qText.innerText = `⏳ AI готує питання по темі: ${selectedTopic}...`;
+    progressText.innerText = `Питання ${currentQ} з ${TOTAL_QUESTIONS}`;
+    qText.innerText = `⏳ AI генерує питання по темі: ${selectedTopic}...`;
     container.innerHTML = "";
     document.getElementById('loading-msg').classList.remove('hidden');
 
@@ -162,7 +164,7 @@ async function getAIQuestion() {
         qText.innerText = data.q;
         data.a.forEach((opt, idx) => {
             const btn = document.createElement('button');
-            btn.className = 'main-btn quiz-opt';
+            btn.className = 'quiz-opt';
             btn.innerText = opt;
             btn.onclick = () => checkAnswer(idx, data.correct, btn);
             container.appendChild(btn);
@@ -178,9 +180,10 @@ function checkAnswer(selected, correct, btn) {
     allBtns.forEach(b => b.disabled = true);
     
     if (selected === correct) {
-        btn.style.background = "#22c55e"; btn.style.color = "white"; score++;
+        btn.style.background = "#22c55e"; btn.style.color = "white"; btn.style.borderColor = "#22c55e";
+        score++;
     } else {
-        btn.style.background = "#ef4444"; btn.style.color = "white";
+        btn.style.background = "#ef4444"; btn.style.color = "white"; btn.style.borderColor = "#ef4444";
         allBtns[correct].style.background = "#22c55e"; allBtns[correct].style.color = "white";
     }
 
@@ -208,21 +211,17 @@ async function showResults() {
         });
         const data = await res.json();
         msg.innerHTML = formatAIResponse(data.analysis);
-    } catch (e) { msg.innerText = "Чудовий результат! Продовжуй підготовку."; }
+    } catch (e) { msg.innerText = "Чудовий результат! ПУЕТ чекає на тебе."; }
 }
 
-// 5. ДОПОМІЖНІ ФУНКЦІЇ
+// 5. НАВІГАЦІЯ ТА ФОРМАТУВАННЯ
 function showSection(id) {
     document.querySelectorAll('.content-section').forEach(s => s.classList.add('hidden'));
-    const target = document.getElementById(id + '-section');
-    if (target) target.classList.remove('hidden');
+    document.getElementById(id + '-section').classList.remove('hidden');
     
-    // Перемикання активності кнопок навігації
     if (id !== 'topic-detail') {
-        const btnTest = document.getElementById('btn-test');
-        const btnStudy = document.getElementById('btn-study');
-        if (btnTest) btnTest.classList.toggle('active', id === 'test');
-        if (btnStudy) btnStudy.classList.toggle('active', id === 'study');
+        document.getElementById('btn-test').classList.toggle('active', id === 'test');
+        document.getElementById('btn-study').classList.toggle('active', id === 'study');
     }
 }
 
@@ -234,11 +233,9 @@ function formatAIResponse(text) {
         .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
 }
 
-// Слухач зміни предмета
+// СЛУХАЧІ ПОДІЙ
 document.addEventListener('DOMContentLoaded', () => {
     init();
-    const subSelect = document.getElementById('subject-select');
-    if (subSelect) {
-        subSelect.addEventListener('change', updateTopicDropdown);
-    }
+    // Оновлення тем при зміні предмета в селекті
+    document.getElementById('subject-select').addEventListener('change', updateTopicDropdown);
 });
