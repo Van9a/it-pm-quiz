@@ -11,7 +11,6 @@ let score = 0, currentQ = 1, TOTAL_QUESTIONS = 5;
 let selectedSubject = "", selectedTopic = "";
 
 function init() {
-    console.log("🚀 Економний режим активовано!");
     const subSelect = document.getElementById('subject-select');
     const studyContainer = document.getElementById('study-list-container');
     if (!subSelect) return;
@@ -60,9 +59,13 @@ async function fetchFromAI(payload) {
         const text = await res.text();
         const data = JSON.parse(text.replace(/```json|```/g, "").trim());
         
-        // Якщо Google свариться на квоти
+        // Перехоплюємо ліміт і витягуємо секунди
         if (data.error && data.message.includes("Quota exceeded")) {
-            return { error: true, message: "⏳ AI відпочиває. Зачекай 60 секунд і спробуй знову (ліміт безкоштовних запитів)." };
+            let waitTime = 60; // За замовчуванням
+            const match = data.message.match(/retry in (\d+(\.\d+)?)s/);
+            if (match) waitTime = Math.ceil(parseFloat(match[1])); // Округлюємо вгору
+            
+            return { error: true, isQuota: true, waitTime: waitTime };
         }
         
         if (data.error) throw new Error(data.message);
@@ -73,12 +76,51 @@ async function fetchFromAI(payload) {
     }
 }
 
+// Функція малювання прогрес-бару
+function handleQuotaCooldown(container, waitTime, retryCallback) {
+    container.innerHTML = `
+        <div style="text-align:center; padding: 20px; border: 2px dashed #e5e7eb; border-radius: 10px;">
+            <p style="color:#ef4444; font-weight:bold; font-size: 16px;">
+                ⏳ AI перезаряджається. Залишилось <span id="cd-sec">${waitTime}</span> сек...
+            </p>
+            <div style="width:100%; background:#f3f4f6; height:12px; border-radius:6px; margin: 15px 0; overflow:hidden;">
+                <div id="cd-bar" style="width:100%; height:100%; background:#ef4444; transition:width 1s linear;"></div>
+            </div>
+            <button id="cd-btn" style="padding: 10px 20px; border:none; border-radius:8px; font-weight:bold; background:#9ca3af; color:white; cursor:not-allowed;" disabled>
+                Зачекайте...
+            </button>
+        </div>
+    `;
+
+    let left = waitTime;
+    const timer = setInterval(() => {
+        left--;
+        let percent = (left / waitTime) * 100;
+        
+        const secEl = document.getElementById('cd-sec');
+        const barEl = document.getElementById('cd-bar');
+        
+        if (secEl) secEl.innerText = left;
+        if (barEl) barEl.style.width = percent + '%';
+
+        if (left <= 0) {
+            clearInterval(timer);
+            const btn = document.getElementById('cd-btn');
+            if (btn) {
+                btn.innerText = "🚀 Продовжити";
+                btn.disabled = false;
+                btn.style.background = "#22c55e"; // Стає зеленим
+                btn.style.cursor = "pointer";
+                btn.onclick = retryCallback;
+            }
+            if (barEl) barEl.style.width = '0%';
+        }
+    }, 1000);
+}
+
 async function startQuiz() {
-    const subSelect = document.getElementById('subject-select');
-    const topicSelect = document.getElementById('topic-select');
-    
-    selectedSubject = subSelect.value;
-    const tVal = topicSelect.value;
+    selectedSubject = document.getElementById('subject-select').value;
+    const tVal = document.getElementById('topic-select').value;
     selectedTopic = (tVal === "random") ? subjectsData[selectedSubject][Math.floor(Math.random()*subjectsData[selectedSubject].length)] : tVal;
     
     score = 0; currentQ = 1;
@@ -95,19 +137,24 @@ async function renderQuestion() {
     document.getElementById('quiz-progress').innerText = `Питання ${currentQ} з ${TOTAL_QUESTIONS}`;
     qText.innerText = "";
     loader.classList.remove('hidden');
+    container.innerHTML = "";
     
-    // Робимо тільки ОДИН запит на одне питання
     const data = await fetchFromAI({ action: "generateQuestion", subject: selectedSubject, topic: selectedTopic });
     loader.classList.add('hidden');
 
+    if (data && data.isQuota) {
+        qText.innerText = "Упс, ми вичерпали безкоштовні запити за хвилину.";
+        handleQuotaCooldown(container, data.waitTime, renderQuestion);
+        return;
+    }
+
     if (!data || data.error) {
-        qText.innerText = "⚠️ " + (data?.message || "Помилка завантаження.");
+        qText.innerText = "⚠️ Помилка завантаження.";
         container.innerHTML = `<button class="quiz-opt" onclick="renderQuestion()">🔄 Спробувати ще раз</button>`;
         return;
     }
 
     qText.innerText = data.q;
-    container.innerHTML = "";
     data.a.forEach((opt, idx) => {
         const btn = document.createElement('button');
         btn.className = 'quiz-opt';
@@ -134,13 +181,17 @@ function handleAnswer(selected, correct, btn) {
 
 async function learnTopic(sub, topic) {
     showSection('topic-detail');
-    document.getElementById('topic-content').innerHTML = "<p>⌛ Завантаження матеріалу (може зайняти кілька секунд)...</p>";
+    const content = document.getElementById('topic-content');
+    content.innerHTML = "<p>⌛ Завантаження матеріалу...</p>";
+    
     const data = await fetchFromAI({ action: "getTopicDetails", subject: sub, topic: topic });
     
-    if (data && data.error) {
-        document.getElementById('topic-content').innerHTML = `<h2>${topic}</h2><p style="color:red;">${data.message}</p><button onclick="learnTopic('${sub}', '${topic}')">🔄 Повторити спробу</button>`;
+    if (data && data.isQuota) {
+        handleQuotaCooldown(content, data.waitTime, () => learnTopic(sub, topic));
+    } else if (data && data.error) {
+        content.innerHTML = `<h2>${topic}</h2><p style="color:red;">Помилка: ${data.message}</p><button onclick="learnTopic('${sub}', '${topic}')">🔄 Повторити</button>`;
     } else {
-        document.getElementById('topic-content').innerHTML = `<h2>${topic}</h2>${data.content.replace(/\n/g, '<br>')}`;
+        content.innerHTML = `<h2>${topic}</h2>${data.content.replace(/\n/g, '<br>')}`;
     }
 }
 
@@ -150,10 +201,13 @@ async function showResults() {
     document.getElementById('final-score').innerText = score;
     const msg = document.getElementById('result-message');
     msg.innerText = "⏳ AI готує підсумок...";
+    
     const data = await fetchFromAI({ action: "analyze", score: score, total: TOTAL_QUESTIONS, subject: selectedSubject });
     
-    if (data && data.error) {
-        msg.innerHTML = "Тест завершено! (Аналіз недоступний через ліміт запитів)";
+    if (data && data.isQuota) {
+        handleQuotaCooldown(msg, data.waitTime, showResults);
+    } else if (data && data.error) {
+        msg.innerHTML = "Тест завершено! Аналіз недоступний.";
     } else {
         msg.innerHTML = data && data.analysis ? data.analysis.replace(/\n/g, '<br>') : "Тест завершено!";
     }
