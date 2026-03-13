@@ -10,7 +10,7 @@ const subjectsData = {
 let score = 0, currentQ = 1, TOTAL_QUESTIONS = 5, quizQuestions = [], selectedSubject = "", selectedTopic = "";
 
 function init() {
-    console.log("🚀 Тренажер v18.5 (DB + CORS) активовано!");
+    console.log("🚀 Тренажер v19.0 (SENIOR FIX) активовано!");
     const subSelect = document.getElementById('subject-select');
     if (!subSelect) return;
     
@@ -36,19 +36,21 @@ function updateTopicDropdown() {
     });
 }
 
+// 🛡️ Секретна зброя: відправляємо запит як plain-text, щоб обійти CORS
 async function fetchFromAI(payload) {
     try {
         const res = await fetch(GAS_URL, { 
             method: 'POST', 
-            mode: 'no-cors', // Спроба обходу CORS для GAS
+            headers: {
+                "Content-Type": "text/plain;charset=utf-8",
+            },
             body: JSON.stringify(payload) 
         });
         
-        // Оскільки 'no-cors' не дає читати тіло, використовуємо звичайний режим з обробкою помилок
-        const resCors = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(payload) });
-        const data = await resCors.json();
+        const data = await res.json();
         
-        if (data.error && data.message.includes("Quota")) {
+        // Перехоплення ліміту
+        if (data.error && data.message && data.message.includes("Quota")) {
             let wait = 60;
             const m = data.message.match(/retry in (\d+)/);
             if (m) wait = Math.ceil(parseInt(m[1]));
@@ -57,7 +59,7 @@ async function fetchFromAI(payload) {
         return data;
     } catch (e) {
         console.error("Fetch error:", e);
-        return { error: true, message: "Помилка зв'язку з сервером. Перевірте деплой." };
+        return { error: true, message: "Сервер відхилив запит. Вимкніть блокувальник реклами (AdBlock) або VPN, якщо вони увімкнені." };
     }
 }
 
@@ -81,7 +83,7 @@ async function loadQuestions() {
     const data = await fetchFromAI({ action: "generateQuiz", subject: selectedSubject, topic: selectedTopic });
     
     if (data.isQuota) return handleQuota(container, data.waitTime, loadQuestions);
-    if (data.error) { qText.innerText = "Помилка: " + data.message; return; }
+    if (data.error) { qText.innerText = "⚠️ Помилка: " + data.message; return; }
     
     quizQuestions = data;
     renderQuestion();
@@ -122,7 +124,7 @@ async function learnTopic(sub, topic) {
     const data = await fetchFromAI({ action: "getTopicDetails", subject: sub, topic: topic });
     
     if (data.isQuota) return handleQuota(content, data.waitTime, () => learnTopic(sub, topic));
-    if (data.error) { content.innerHTML = "<p>Помилка: " + data.message + "</p>"; return; }
+    if (data.error) { content.innerHTML = "<p style='color:red;'>⚠️ Помилка: " + data.message + "</p>"; return; }
     
     content.innerHTML = `<h2>${topic}</h2><div style="line-height:1.6;">${data.content.replace(/\n/g, '<br>')}</div>`;
 }
@@ -151,7 +153,7 @@ async function showResults() {
     const msg = document.getElementById('result-message');
     msg.innerText = "⏳ Отримання аналізу...";
     const data = await fetchFromAI({ action: "analyze", score: score, total: TOTAL_QUESTIONS });
-    msg.innerHTML = data.analysis ? data.analysis.replace(/\n/g, '<br>') : "Тест завершено!";
+    msg.innerHTML = data.analysis ? data.analysis.replace(/\n/g, '<br>') : "Аналіз завершено.";
 }
 
 function showSection(id) {
