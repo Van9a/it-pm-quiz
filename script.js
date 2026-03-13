@@ -1,4 +1,4 @@
-const GAS_URL = "https://script.google.com/macros/s/AKfycbyNNCCuYNGZLEi_lLyuegE_qtfibsjdJ9Qt-LpozcAW0E8AYF3RiUUerkB_aOiQ9BsjBg/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbzI2pNEN4YcARCmCSI-Qcbl7aLvZhx-HlhmqvszeAHw-4iM9Xc8_iYgozaxxn0Dztacpw/exec";
 
 const subjectsData = {
     "Менеджмент 073": ["4 функції менеджменту", "SWOT-аналіз", "Маркетинг 4P", "Стилі керівництва", "Мотивація"],
