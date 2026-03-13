@@ -1,33 +1,31 @@
 :root {
     --primary: #2563eb;
-    --primary-hover: #1d4ed8;
-    --ai-color: #8b5cf6;
-    --bg: #f8fafc;
-    --text: #1e293b;
+    --primary-light: #eff6ff;
+    --text-dark: #1e293b;
+    --text-muted: #64748b;
+    --bg-app: #f1f5f9;
     --white: #ffffff;
-    --gray: #e2e8f0;
-    --success: #22c55e;
-    --error: #ef4444;
+    --border: #e2e8f0;
+    --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
 }
 
 body {
-    font-family: 'Segoe UI', system-ui, sans-serif;
-    background: var(--bg);
-    color: var(--text);
+    font-family: 'Inter', -apple-system, sans-serif;
+    background-color: var(--bg-app);
+    color: var(--text-dark);
+    margin: 0;
     display: flex;
     flex-direction: column;
     align-items: center;
     padding: 20px;
-    margin: 0;
     min-height: 100vh;
 }
 
 /* Навігація */
 .main-menu {
     display: flex;
-    justify-content: center;
-    gap: 12px;
-    margin-bottom: 30px;
+    gap: 10px;
+    margin-bottom: 25px;
     width: 100%;
     max-width: 600px;
 }
@@ -36,127 +34,110 @@ body {
     flex: 1;
     padding: 14px;
     border: none;
-    border-radius: 12px;
+    border-radius: 14px;
     background: var(--white);
+    color: var(--text-muted);
+    font-weight: 600;
     cursor: pointer;
-    font-weight: bold;
-    color: #64748b;
-    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
-    transition: all 0.3s ease;
+    transition: 0.3s;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
 }
 
 .main-menu button.active {
     background: var(--primary);
     color: white;
-    transform: translateY(-2px);
-    box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.4);
+    box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.3);
 }
 
-/* Контейнери */
+/* Картки */
+.card {
+    background: var(--white);
+    padding: 32px;
+    border-radius: 24px;
+    box-shadow: var(--shadow);
+    width: 100%;
+    box-sizing: border-box;
+}
+
 .content-section {
     width: 100%;
     max-width: 600px;
 }
 
-.quiz-container, .study-container {
+.brand { text-align: center; margin-bottom: 30px; }
+.brand .emoji { font-size: 40px; display: block; margin-bottom: 10px; }
+.brand h1 { margin: 0; font-size: 1.5rem; letter-spacing: -0.5px; }
+
+/* СТИЛІЗАЦІЯ SELECT (Твій запит) */
+.form-group { margin-bottom: 20px; }
+label { display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-bottom: 8px; margin-left: 4px; }
+
+select {
+    width: 100%;
+    padding: 14px 16px;
+    font-size: 1rem;
+    border: 2px solid var(--border);
+    border-radius: 14px;
     background: var(--white);
-    padding: 30px;
-    border-radius: 20px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.05);
-    box-sizing: border-box;
+    appearance: none;
+    cursor: pointer;
+    background-image: url('data:image/svg+xml;charset=US-ASCII,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="%2364748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>');
+    background-repeat: no-repeat;
+    background-position: right 16px center;
+    background-size: 18px;
+    transition: 0.2s;
+}
+
+select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 4px var(--primary-light); }
+
+/* Кнопки */
+.main-btn {
+    width: 100%;
+    padding: 16px;
+    border: none;
+    border-radius: 14px;
+    background: var(--primary);
+    color: white;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.main-btn:hover { transform: translateY(-2px); filter: brightness(1.1); }
+.main-btn.secondary { background: var(--bg-app); color: var(--text-dark); margin-top: 20px; }
+
+/* Навчання та Текст */
+.topic-link {
+    display: block;
+    padding: 16px;
+    background: var(--primary-light);
+    color: var(--primary);
+    border-radius: 12px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: 0.2s;
+}
+
+.topic-link:hover { background: var(--primary); color: white; transform: translateX(5px); }
+
+#topic-content, .question-box, .ai-feedback {
+    white-space: pre-wrap;
+    line-height: 1.7;
+    text-align: left;
 }
 
 .hidden { display: none !important; }
 
-/* План навчання (Картки тем) */
-.study-category {
-    margin-bottom: 25px;
-    border-left: 5px solid var(--primary);
-    padding-left: 20px;
+/* Питання в тесті */
+.options-grid { display: grid; gap: 10px; margin-top: 20px; }
+.quiz-opt {
     text-align: left;
-}
-
-.study-category h3 {
-    margin: 0 0 15px 0;
-    color: var(--primary);
-    font-size: 1.25rem;
-}
-
-.topic-link {
-    display: block;
-    padding: 12px 15px;
-    margin: 8px 0;
-    background: #f1f5f9;
-    border-radius: 10px;
-    color: var(--text);
-    text-decoration: none;
-    cursor: pointer;
-    transition: all 0.2s;
-    border: 1px solid transparent;
-    font-size: 0.95rem;
-}
-
-.topic-link:hover {
-    background: #eff6ff;
-    border-color: var(--primary);
-    color: var(--primary);
-    transform: translateX(8px);
-}
-
-/* Тестування */
-.question {
-    font-size: 1.15rem;
-    font-weight: 600;
-    margin-bottom: 25px;
-    text-align: left;
-    line-height: 1.6;
-}
-
-.options {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-.main-btn {
-    background: var(--primary);
-    color: white;
-    border: none;
-    padding: 16px;
+    background: var(--white);
+    border: 2px solid var(--border);
+    padding: 14px;
     border-radius: 12px;
     cursor: pointer;
-    font-weight: bold;
-    width: 100%;
-    transition: 0.3s;
+    font-weight: 500;
 }
-
-.main-btn:hover { filter: brightness(1.1); }
-
-.quiz-opt {
-    background: var(--white);
-    color: var(--text);
-    border: 1px solid var(--gray);
-    text-align: left;
-    padding: 14px 18px;
-}
-
-.score-circle {
-    font-size: 4rem;
-    font-weight: 800;
-    color: var(--primary);
-    margin: 20px 0;
-    text-align: center;
-}
-
-#topic-content, #question-text, #result-message {
-    white-space: pre-wrap; /* Це змушує браузер бачити "Enter" від нейромережі */
-    text-align: left;
-    line-height: 1.6;
-}
-
-#topic-content {
-    text-align: left;
-    line-height: 1.8;
-}
-
-#topic-content h2, #topic-content h3 { color: var(--primary); margin-top: 30px; }
