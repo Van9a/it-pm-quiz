@@ -22,27 +22,45 @@
         .ai-btn { background: var(--ai-color) !important; margin-top: 15px; font-size: 0.9rem !important; }
         .score-circle { font-size: 3.5rem; font-weight: 800; color: var(--primary); margin: 20px 0; }
         #result-message { font-style: italic; color: #475569; line-height: 1.5; background: #f1f5f9; padding: 15px; border-radius: 8px; }
-        .main-menu {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
+       /* Робимо меню горизонтальним зверху */
+.main-menu {
+    display: flex;
+    justify-content: center; /* Центруємо кнопки */
+    gap: 15px;              /* Відстань між кнопками */
+    margin: 20px auto;      /* Відступи зверху/знизу та центрування */
+    width: 100%;            /* Меню на всю ширину */
+    max-width: 800px;       /* Обмежуємо ширину для краси */
+}
 
-        .main-menu button {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 8px;
-            background: #eee;
-            cursor: pointer;
-            font-weight: bold;
-            transition: 0.3s;
-        }
+/* Налаштування кнопок, щоб вони не розтягувалися */
+.main-menu button {
+    flex: 1;                /* Кнопки однакової ширини */
+    max-width: 250px;       /* Але не занадто широкі */
+    padding: 15px 20px;
+    height: auto;           /* Скидаємо фіксовану висоту */
+    border: none;
+    border-radius: 12px;
+    background: #f0f0f0;    /* Сірий колір для неактивної кнопки */
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
 
-        .main-menu button.active {
-            background: #6c5ce7;
-            color: white;
-        }
+/* Стиль активної кнопки */
+.main-menu button.active {
+    background: #6c5ce7;    /* Твій фіолетовий */
+    color: white;
+    box-shadow: 0 4px 15px rgba(108, 92, 231, 0.4);
+}
+
+/* Контейнери секцій мають бути під меню */
+.content-section {
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;         /* Центруємо контент */
+}
 
         .study-category {
             background: #f9f9f9;
@@ -339,6 +357,7 @@
 
 </body>
 </html>
+
 
 
 
