@@ -39,17 +39,14 @@ function updateTopicDropdown() {
 // 🛡️ Секретна зброя: відправляємо запит як plain-text, щоб обійти CORS
 async function fetchFromAI(payload) {
     try {
+        // Найпростіший "голий" запит, щоб браузер не запускав перевірку CORS
         const res = await fetch(GAS_URL, { 
             method: 'POST', 
-            headers: {
-                "Content-Type": "text/plain;charset=utf-8",
-            },
             body: JSON.stringify(payload) 
         });
         
         const data = await res.json();
         
-        // Перехоплення ліміту
         if (data.error && data.message && data.message.includes("Quota")) {
             let wait = 60;
             const m = data.message.match(/retry in (\d+)/);
@@ -59,7 +56,7 @@ async function fetchFromAI(payload) {
         return data;
     } catch (e) {
         console.error("Fetch error:", e);
-        return { error: true, message: "Сервер відхилив запит. Вимкніть блокувальник реклами (AdBlock) або VPN, якщо вони увімкнені." };
+        return { error: true, message: "Помилка зв'язку. Перевірте налаштування деплою в GAS (Execute as: Me, Access: Anyone)." };
     }
 }
 
